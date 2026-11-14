@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GameDeck · desktop game launcher (sample)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=Inter:wght@400;500;600&family=League+Gothic&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f11;--p0:#0a0a0a;--p1:#141516;--p2:#1b1c1e;--p3:#262626;--p4:#404040;--tx:#fafafa;--mut:#a3a3a3;--accent:#f05a22;--accent2:#ea580c;--glow:rgba(240,90,34,.42);--ok:#22c55e;--warn:#fbbf24;--bad:#ef4444;
+ --display:"League Gothic",Impact,"Arial Narrow",sans-serif;--sans:"Inter","Be Vietnam Pro",system-ui,sans-serif;--ease:cubic-bezier(.3,0,.4,1)}
+html[data-theme=light]{--bg:#e9ecf1;--p0:#f6f7f9;--p1:#ffffff;--p2:#f1f3f6;--p3:#dfe3ea;--p4:#b8bfcc;--tx:#14181f;--mut:#5b6573}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);overflow:hidden;font-family:var(--sans);color:var(--tx);font-size:13.5px}
+button,input,select{font:inherit;color:inherit}button{border:0;background:none;cursor:pointer}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#stage{position:fixed;inset:0;display:grid;place-items:center}
+#win{position:relative;width:1280px;height:720px;flex:none;transform-origin:center;border-radius:12px;overflow:hidden;background:var(--p0);display:grid;grid-template-rows:46px minmax(0,1fr);box-shadow:0 0 0 1px var(--p4),0 20px 60px rgba(0,0,0,.6);transition:transform .35s var(--ease),opacity .25s,border-radius .3s}
+#win.max{border-radius:0}#win.min{transform:translateY(60%) scale(.2)!important;opacity:0;pointer-events:none}
+.glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(800px 380px at 12% -10%,var(--glow),transparent 70%),radial-gradient(600px 360px at 100% 0,rgba(124,58,237,.14),transparent 70%)}
+/* title bar */
+#tb{position:relative;z-index:30;display:flex;align-items:center;gap:14px;padding:0 0 0 14px;background:var(--p1);border-bottom:1px solid var(--p3)}
+.brand{display:flex;align-items:center;gap:8px;font:400 22px/1 var(--display);letter-spacing:.07em;text-transform:uppercase}
+.brand .lg{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:13px;color:#fff;box-shadow:0 4px 12px var(--glow)}
+#nav{display:flex;gap:2px}
+.nt{position:relative;padding:8px 13px;border-radius:8px;font-weight:600;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);transition:.2s}
+.nt:hover{color:var(--tx)}.nt.on{color:var(--tx)}
+.nt.on::after{content:"";position:absolute;left:13px;right:13px;bottom:-7px;height:2px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px var(--glow)}
+.nt .bdg{margin-left:6px;background:var(--accent);color:#fff;border-radius:999px;font-size:10px;padding:1px 6px}
+#gsearch{margin:0 auto;display:flex;align-items:center;gap:8px;flex:0 1 300px;min-width:130px;overflow:hidden;white-space:nowrap;height:30px;padding:0 10px;border-radius:8px;background:var(--p2);border:1px solid var(--p3);color:var(--mut);text-align:left}
+#gsearch kbd{margin-left:auto;font:11px ui-monospace,Consolas,monospace;border:1px solid var(--p4);border-radius:4px;padding:0 5px}
+#gsearch:hover{border-color:var(--accent)}
+.np{flex:none;display:none;align-items:center;gap:8px;white-space:nowrap;height:28px;padding:0 10px;border-radius:999px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.5);color:#4ade80;font-size:12px;font-weight:600}
+.np.on{display:flex}.np i{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.ib{position:relative;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--mut);transition:.2s}.ib:hover{background:var(--p3);color:var(--tx)}
+.ib .dot{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--p1)}
+.usr{flex:none;white-space:nowrap;display:flex;align-items:center;gap:8px;padding:3px 8px 3px 3px;border-radius:999px;background:var(--p2);border:1px solid var(--p3)}
+.usr img{width:26px;height:26px;border-radius:50%}.usr b{font-size:12px}.usr .st{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.wc{flex:none;display:flex;margin-left:6px}.wc button{width:46px;height:46px;display:grid;place-items:center;color:var(--mut)}.wc button:hover{background:var(--p3);color:var(--tx)}.wc button.x:hover{background:#e11d48;color:#fff}
+/* views */
+#views{position:relative;min-height:0}
+.view{position:absolute;inset:0;display:none}.view.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1}}
+.scr{overflow:auto;height:100%;padding:20px 26px 34px;scrollbar-width:thin;scrollbar-color:var(--p4) transparent}
+.h2{font:400 24px/1 var(--display);letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.h2::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px var(--glow)}
+.h2 small{margin-left:auto;font:600 12px var(--sans);text-transform:none;letter-spacing:0;color:var(--mut)}
+.card{background:var(--p1);border:1px solid var(--p3);border-radius:14px;padding:16px}
+.btn{height:36px;padding:0 16px;border-radius:9px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:8px;background:var(--p3);transition:.2s var(--ease);white-space:nowrap}
+.btn:hover{background:var(--p4);transform:translateY(-1px)}.btn:disabled{opacity:.45;pointer-events:none}
+.btn.pri{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 6px 18px var(--glow)}.btn.pri:hover{box-shadow:0 10px 24px var(--glow)}
+.btn.grn{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff}.btn.red{background:rgba(239,68,68,.16);color:#fca5a5;box-shadow:inset 0 0 0 1px rgba(239,68,68,.5)}.btn.red:hover{background:rgba(239,68,68,.3)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px;border-radius:7px}
+.inp{height:34px;width:100%;padding:0 10px;border-radius:8px;background:var(--p2);border:1px solid var(--p3);outline:none}.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+select.inp{padding-right:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--p3);color:var(--mut)}
+.chip.ok{background:rgba(34,197,94,.15);color:#4ade80}.chip.ac{background:rgba(240,90,34,.16);color:#ffb08a}.chip.wr{background:rgba(251,191,36,.15);color:#fcd34d}
+.tile{border-radius:22%;display:grid;place-items:center;color:#fff;font:400 1em var(--display);letter-spacing:.02em;flex:none;overflow:hidden}
+.tile img{width:100%;height:100%;display:block}
+mark{background:rgba(240,90,34,.35);color:inherit;border-radius:3px;padding:0 1px}
+.sw{display:flex;gap:6px}.sw button{width:24px;height:24px;border-radius:50%;border:2px solid transparent}.sw button.on{border-color:var(--tx)}
+/* LIBRARY */
+.lib{display:grid;grid-template-columns:292px minmax(0,1fr);height:100%}
+.side{display:flex;flex-direction:column;border-right:1px solid var(--p3);background:var(--p1);min-height:0}
+.side .top{padding:12px;display:grid;gap:8px;border-bottom:1px solid var(--p3)}
+.sbox{position:relative}.sbox svg{position:absolute;left:10px;top:9px;color:var(--mut)}.sbox input{padding-left:32px;padding-right:30px}
+.sbox button{position:absolute;right:6px;top:5px;width:24px;height:24px;border-radius:6px;color:var(--mut);display:none}.sbox.has button{display:grid;place-items:center}
+.row2{display:flex;gap:6px}
+#glist{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 6px 10px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--p4) transparent}
+.gh{display:flex;align-items:center;gap:6px;padding:10px 8px 4px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);cursor:pointer;user-select:none}
+.gh .n{margin-left:auto;font-weight:600}.gh svg{transition:.2s;width:12px;height:12px}.gh.c svg{transform:rotate(-90deg)}
+.gi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:9px;cursor:pointer;transition:background .15s;position:relative}
+.gi:hover{background:var(--p3)}.gi.sel{background:linear-gradient(90deg,rgba(240,90,34,.22),transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.gi .tile{width:28px;height:28px;font-size:13px}.gi .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.gi.off .nm{color:var(--mut)}.gi .tile{transition:.2s}.gi.off .tile{filter:grayscale(.8) brightness(.8)}
+.gi .stt{font-size:10.5px;font-weight:700;color:var(--mut)}.gi .stt.run{color:#4ade80}.gi .stt.dn{color:var(--accent)}
+.sfoot{padding:10px 12px;border-top:1px solid var(--p3);display:flex;gap:8px;align-items:center}
+.sfoot .meter{flex:1;height:6px;border-radius:3px;background:var(--p3);overflow:hidden}.sfoot .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#fbbf24)}
+.main{min-width:0;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--p4) transparent}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}.bar .sp{flex:1}
+.seg{display:flex;border:1px solid var(--p3);border-radius:8px;overflow:hidden}.seg button{width:34px;height:30px;display:grid;place-items:center;color:var(--mut)}.seg button.on{background:var(--accent);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.gc{position:relative;border-radius:14px;overflow:hidden;background:var(--p1);border:1px solid var(--p3);cursor:pointer;transition:transform .25s var(--ease),border-color .25s,box-shadow .25s;--mx:50%;--my:0}
+.gc::after{content:"";position:absolute;inset:0;background:radial-gradient(220px circle at var(--mx) var(--my),var(--glow),transparent 60%);opacity:0;transition:.25s;pointer-events:none}
+.gc:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 14px 28px rgba(0,0,0,.45)}.gc:hover::after{opacity:1}
+.gc.sel{border-color:var(--accent)}
+.gc .art{height:96px;background-size:cover;background-position:center;position:relative}
+.gc .art .tile{position:absolute;left:12px;bottom:-18px;width:44px;height:44px;font-size:20px;border:2px solid var(--p1);box-shadow:0 6px 14px rgba(0,0,0,.5)}
+.gc .bd{position:absolute;right:8px;top:8px;display:flex;gap:4px}
+.gc .info{padding:24px 12px 12px}.gc b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gc small{color:var(--mut)}
+.gc.off .art{filter:grayscale(.85) brightness(.75)}
+.pill{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);color:#fff}.pill svg{width:12px;height:12px}.pill.fav{color:#f87171}
+table.lt{width:100%;border-collapse:collapse}table.lt th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding:6px 10px;border-bottom:1px solid var(--p3)}
+table.lt td{padding:8px 10px;border-bottom:1px solid var(--p3)}table.lt tr.r{cursor:pointer}table.lt tr.r:hover{background:var(--p2)}table.lt tr.sel{background:rgba(240,90,34,.1)}
+.empty{padding:50px 10px;text-align:center;color:var(--mut)}.empty b{display:block;font:400 26px var(--display);letter-spacing:.05em;color:var(--tx);text-transform:uppercase;margin-bottom:6px}
+/* detail */
+.hero{position:relative;height:270px;background-size:cover;background-position:center;display:flex;align-items:flex-end}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,var(--p0),transparent 70%),linear-gradient(90deg,rgba(0,0,0,.65),transparent 65%)}
+.hero .in{position:relative;padding:0 26px 20px;display:flex;align-items:flex-end;gap:16px;width:100%}
+.hero .in>div{min-width:0}.hero .tile{width:84px;height:84px;font-size:38px;border:2px solid var(--p3);box-shadow:0 10px 26px rgba(0,0,0,.6)}
+.hero h1{font:400 56px/.95 var(--display);letter-spacing:.02em;text-transform:uppercase;text-shadow:0 4px 20px rgba(0,0,0,.6)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 26px;border-bottom:1px solid var(--p3);background:var(--p1)}
+.acts .meta{margin-left:auto;display:flex;gap:18px}.acts .meta div{text-align:right}.acts .meta small{display:block;color:var(--mut);font-size:11px;letter-spacing:.07em;text-transform:uppercase}.acts .meta b{font-size:14px}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;padding:18px 26px 30px}
+.prog{height:8px;border-radius:4px;background:var(--p3);overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#fbbf24);transition:width .4s}
+.ach{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.ach span{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--p3);font-size:17px;filter:grayscale(1);opacity:.5}.ach span.on{filter:none;opacity:1;background:rgba(240,90,34,.2);box-shadow:inset 0 0 0 1px var(--accent)}
+.fr{display:flex;align-items:center;gap:10px;padding:7px 0}.fr img{width:30px;height:30px;border-radius:50%}.fr small{display:block;color:var(--mut)}
+/* store */
+.hl{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.sc{position:relative;border-radius:14px;overflow:hidden;background:var(--p1);border:1px solid var(--p3);transition:.25s var(--ease)}.sc:hover{transform:translateY(-4px);border-color:var(--accent)}
+.sc .art{height:110px;background-size:cover;background-position:center;position:relative}
+.sc .hrt{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);display:grid;place-items:center;color:#fff}.sc .hrt.on{color:#f87171}.sc .hrt.on svg{fill:#f87171}
+.sc .disc{position:absolute;left:8px;top:8px;background:#16a34a;color:#fff;font-weight:800;font-size:12px;padding:2px 8px;border-radius:6px}
+.sc .bd{padding:12px}.sc .bd b{display:block;font-size:14px}.sc .bd small{color:var(--mut)}
+.sc .ft{display:flex;align-items:center;gap:8px;margin-top:10px}.sc .price{font-weight:800;margin-right:auto}.sc .price s{color:var(--mut);font-weight:500;margin-right:6px}
+.corner{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--p3)}.li:last-child{border:0}.li .dt{width:46px;text-align:center;font:400 20px/1 var(--display);color:var(--accent)}.li .dt small{display:block;font:600 10px var(--sans);color:var(--mut);letter-spacing:.08em}
+/* downloads */
+.dl{display:grid;grid-template-columns:1fr 330px;gap:16px}
+.dq{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--p2);border:1px solid var(--p3);margin-bottom:10px}
+.dq .tile{width:44px;height:44px;font-size:20px}.dq .c{flex:1;min-width:0}.dq .c small{color:var(--mut)}.dq .prog{margin:6px 0 4px}
+canvas#spark{width:100%;height:90px;display:block}
+.fld{display:grid;gap:6px;margin-bottom:12px}.fld label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.tg{position:relative;width:38px;height:22px;border-radius:11px;background:var(--p4);transition:.2s;flex:none}.tg::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}.tg.on{background:var(--accent)}.tg.on::after{left:19px}
+.trow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0}
+/* control */
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.gauge{height:10px;border-radius:5px;background:var(--p3);position:relative;margin:10px 0 4px}.gauge i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,var(--accent),#fbbf24);transition:width .5s}.gauge u{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:#fff;transition:left .3s}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.pl{width:100%;border-collapse:collapse}.pl th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:left;padding:6px 8px;cursor:pointer}.pl td{padding:8px;border-top:1px solid var(--p3)}
+.cl{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--p3)}.cl input{accent-color:var(--accent);width:16px;height:16px}.cl span.sz{margin-left:auto;color:var(--mut)}
+/* overlays */
+#ov{position:absolute;inset:0;z-index:80;display:none;place-items:center;background:rgba(0,0,0,.55);backdrop-filter:blur(8px)}#ov.on{display:grid;animation:fade .2s}
+.dlg{width:640px;max-height:620px;display:flex;flex-direction:column;border-radius:16px;background:var(--p1);border:1px solid var(--p4);box-shadow:0 30px 80px rgba(0,0,0,.7);animation:pop .3s var(--ease);overflow:hidden}
+@keyframes pop{from{transform:scale(.93) translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.dlg .hd{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--p3)}.dlg .hd h3{font:400 26px var(--display);letter-spacing:.05em;text-transform:uppercase}.dlg .hd button{margin-left:auto}
+.dlg .bd{padding:16px 20px;overflow:auto}.dlg .ft{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--p3)}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--p3)}.tabs button{padding:8px 14px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);border-bottom:2px solid transparent}.tabs button.on{color:var(--tx);border-color:var(--accent)}
+.err{color:#fca5a5;font-size:12px;min-height:16px}
+.scan{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px}.scan:hover{background:var(--p2)}.scan input{accent-color:var(--accent);width:16px;height:16px}.scan small{display:block;color:var(--mut);font:11.5px ui-monospace,Consolas,monospace}
+#cm{position:absolute;z-index:90;min-width:230px;padding:6px;border-radius:12px;background:var(--p2);border:1px solid var(--p4);box-shadow:0 16px 40px rgba(0,0,0,.6);display:none;animation:pop .15s}
+#cm.on{display:block}#cm button{width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;text-align:left;font-size:13px}#cm button:hover{background:var(--p3)}#cm button.d{color:#fca5a5}#cm hr{border:0;border-top:1px solid var(--p3);margin:5px 4px}#cm .sub{padding-left:18px;display:none}#cm .sub.on{display:block}#cm .kb{margin-left:auto;color:var(--mut);font-size:11px}
+#toasts{position:absolute;left:18px;bottom:16px;z-index:95;display:grid;gap:8px}
+.toast{display:flex;align-items:center;gap:12px;min-width:280px;max-width:420px;padding:11px 14px;border-radius:12px;background:var(--p2);border:1px solid var(--p4);box-shadow:0 12px 30px rgba(0,0,0,.5);animation:ti .3s var(--ease)}
+@keyframes ti{from{transform:translateX(-20px);opacity:0}to{transform:none;opacity:1}}.toast b{flex:1}.toast button{color:var(--accent);font-weight:800}
+#pal{position:absolute;inset:0;z-index:92;display:none;align-items:flex-start;justify-content:center;padding-top:80px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}#pal.on{display:flex}
+.pbox{width:600px;border-radius:14px;background:var(--p1);border:1px solid var(--p4);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.pbox input{width:100%;height:50px;padding:0 18px;background:none;border:0;border-bottom:1px solid var(--p3);outline:none;font-size:16px}
+#pres{max-height:380px;overflow:auto}.pg{padding:8px 18px 2px;font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--mut)}
+.pr{display:flex;align-items:center;gap:10px;padding:8px 18px;cursor:pointer}.pr.sel{background:rgba(240,90,34,.18)}.pr small{margin-left:auto;color:var(--mut)}
+#friends{position:absolute;right:16px;bottom:14px;z-index:50}
+#friends .fb{display:flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:999px;background:var(--p2);border:1px solid var(--p4);font-weight:700;font-size:12.5px;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+#friends .fb i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+#fl{display:none;position:absolute;right:0;bottom:42px;width:270px;padding:10px 14px;border-radius:14px;background:var(--p1);border:1px solid var(--p4);box-shadow:0 16px 40px rgba(0,0,0,.6)}#fl.on{display:block;animation:pop .2s}
+#nl{position:absolute;right:120px;top:50px;width:330px;z-index:60;display:none;padding:10px 14px;border-radius:14px;background:var(--p1);border:1px solid var(--p4);box-shadow:0 16px 40px rgba(0,0,0,.6);max-height:330px;overflow:auto}#nl.on{display:block;animation:pop .2s}
+#closed{position:absolute;inset:0;z-index:200;display:none;place-items:center;background:#05060a;text-align:center}#closed.on{display:grid}
+#dock{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);display:none;padding:8px 18px;border-radius:12px;background:var(--p2);border:1px solid var(--p4);font-weight:700;z-index:300}#dock.on{display:block}
+body.embed #hint{display:none}
+body.electron #tb{-webkit-app-region:drag}body.electron #tb button,body.electron #tb input,body.electron .usr{-webkit-app-region:no-drag}
+#hint{position:fixed;right:10px;bottom:6px;font:11.5px ui-monospace,Consolas,monospace;color:var(--mut);background:rgba(10,10,10,.8);border:1px solid var(--p3);padding:3px 10px;border-radius:999px;z-index:400;opacity:.8}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="win">
+  <header id="tb">
+    <div class="brand"><span class="lg">▶</span>GameDeck</div>
+    <nav id="nav"></nav>
+    <button id="gsearch" data-testid="global-search" aria-label="Search everything"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search everything<kbd>Ctrl K</kbd></button>
+    <div class="np" id="np" data-testid="now-playing" role="status" aria-label="Now playing"><i></i><span id="npt"></span><button class="btn sm red" id="npstop" style="height:22px">Stop</button></div>
+    <button class="ib" id="bell" title="Notifications"><svg class="i" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><span class="dot" id="beldot" style="display:none"></span></button>
+    <div class="usr"><img src="assets/avatar-1.svg" alt=""><b>Player One</b><span class="st"></span></div>
+    <div class="wc"><button id="wmin" title="Minimize" aria-label="Minimize"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><button id="wmax" title="Maximize" aria-label="Maximize"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1.5"/></svg></button><button class="x" id="wx" title="Close" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  </header>
+  <div class="glow"></div>
+  <main id="views">
+    <section class="view" id="v-library"><div class="lib">
+      <aside class="side">
+        <div class="top">
+          <div class="sbox" id="sbox"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="inp" id="lq" data-testid="library-search" placeholder="Search your library   ( / )" autocomplete="off"><button id="lqx" title="Clear"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="row2"><select class="inp" id="lf" aria-label="Filter games"><option value="all">All games</option><option value="installed">Installed</option><option value="notinstalled">Not installed</option><option value="running">Running</option><option value="update">Update available</option></select><select class="inp" id="ls" aria-label="Sort games"><option value="name">A–Z</option><option value="played">Last played</option><option value="time">Play time</option><option value="size">Size</option><option value="added">Recently added</option></select></div>
+        </div>
+        <div id="glist"></div>
+        <div class="sfoot"><button class="btn sm pri" id="addg"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add a game</button><div class="meter" title="Disk usage"><i id="dsk"></i></div><small id="dsktx" style="color:var(--mut)"></small></div>
+      </aside>
+      <section class="main" id="lmain"></section>
+    </div></section>
+    <section class="view" id="v-store"><div class="scr" id="store"></div></section>
+    <section class="view" id="v-dl"><div class="scr" id="dls"></div></section>
+    <section class="view" id="v-ctl"><div class="scr" id="ctl"></div></section>
+    <section class="view" id="v-set"><div class="scr" id="set"></div></section>
+  </main>
+  <div id="ov"></div><div id="cm"></div><div id="toasts"></div>
+  <div id="pal"><div class="pbox"><input id="pq" data-testid="palette-input" placeholder="Search games, store titles and actions…" autocomplete="off"><div id="pres"></div></div></div>
+  <div id="nl"></div>
+  <div id="friends"><div id="fl"></div><button class="fb" id="fbtn"><i></i><span id="fcnt"></span></button></div>
+  <div id="closed"><div><div class="brand" style="justify-content:center;font-size:34px"><span class="lg" style="width:40px;height:40px;font-size:20px">▶</span>GameDeck</div><p style="color:var(--mut);margin:14px 0 20px">The launcher was closed. Running games were stopped.</p><button class="btn pri" id="reopen">Reopen GameDeck</button></div></div>
+</div></div>
+<button id="dock">▶ GameDeck (click to restore)</button>
+<div id="hint"><b>Ctrl K</b> search · <b>Ctrl N</b> add game · <b>Del</b> remove · <b>Enter</b> play · <b>/</b> filter</div>
+
+<script>
+/* ============================================================
+   GameDeck – a sample desktop game launcher (front-end only).
+   Features modelled on Steam (library, collections, favourites,
+   add non-store game, hide/remove/uninstall, download manager with
+   bandwidth limit + schedule) and Opera GX (GX Control limiters,
+   process killer, cleaner, Corner with releases and deals).
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IC={search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',plus:'<path d="M12 5v14M5 12h14"/>',play:'<path d="M7 4l13 8-13 8z" fill="currentColor"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>',heart:'<path d="M12 20s-7-4.6-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.4-9 9-9 9z"/>',dots:'<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',pause:'<path d="M8 5v14M16 5v14"/>',folder:'<path d="M3 7h6l2 2h10v10H3z"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12l5 5 9-10"/>',chev:'<path d="M6 9l6 6 6-6"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',eyeoff:'<path d="M3 3l18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8M6.3 7.4C3.7 9 2 12 2 12s4 7 10 7c1.6 0 3-.4 4.3-1"/>',up:'<path d="M12 19V5M6 11l6-6 6 6"/>',down:'<path d="M12 5v14M6 13l6 6 6-6"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',props:'<path d="M4 6h16M4 12h16M4 18h16"/>',grid:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',cloud:'<path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/>',bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',store:'<path d="M4 9l2-5h12l2 5M4 9v11h16V9M4 9h16"/>'};
+const ic=(n,s=16)=>`<svg class="i" viewBox="0 0 24 24" style="width:${s}px;height:${s}px">${IC[n]||''}</svg>`;
+
+/* ---------------- data ---------------- */
+const NOW=Date.now(),H=3600e3,D=24*H;
+const ART=['hero-1','hero-2','hero-3','banner-a','banner-b','banner-c'];
+const mk=(id,name,icon,art,genre,size,o={})=>({id,name,icon,art,genre,size,version:'1.'+(id.length%5)+'.'+(name.length%9),installed:true,fav:false,hidden:false,cols:[],playMs:0,last:0,path:'C:\\Games\\'+name.replace(/[^A-Za-z0-9]+/g,'')+'\\game.exe',src:'store',ach:[0,12],added:NOW-30*D,update:false,upd:'always',opts:'',...o});
+const DEFAULT={
+ games:[mk('lantern','Lantern Tale','icon-ghost','hero-1','Action RPG',18.4,{fav:true,playMs:41*H,last:NOW-2*H,ach:[9,12],cols:['Story']}),
+  mk('sword','Sword Legends','icon-sword','banner-a','MMORPG',32.1,{playMs:128*H,last:NOW-1*D,ach:[11,12],update:true,fav:true}),
+  mk('slug','Slug Squad','icon-slug','banner-c','Run & gun',3.6,{playMs:12*H,last:NOW-6*D,ach:[4,12],cols:['Co-op']}),
+  mk('hunt','Hunt Online','icon-hunt','hero-2','Co-op action',24.8,{playMs:63*H,last:NOW-3*D,ach:[7,12],cols:['Co-op']}),
+  mk('bomber','Bomber Arena','icon-bomb','hero-3','Party',2.2,{playMs:19*H,last:NOW-9*D,ach:[5,12],cols:['Co-op']}),
+  mk('fish','Fish Frenzy','icon-fish','banner-b','Arcade',1.4,{installed:false,playMs:3*H,last:NOW-40*D,ach:[2,12],added:NOW-60*D}),
+  mk('nebula','Nebula Drift',null,'art-space','Racing',14.2,{installed:false,added:NOW-12*D,ach:[0,12]}),
+  mk('pixel','Pixel Keep',null,'art-pixel','Roguelike',0.9,{playMs:7*H,last:NOW-14*D,ach:[3,12],cols:['Backlog']}),
+ ],
+ cols:['Story','Co-op','Backlog'],
+ dls:[],wish:['orbit','harbor'],cleaned:0,notes:[{t:'Welcome to GameDeck',ts:NOW-5*60e3}],
+ s:{view:'grid',accent:'#f05a22',theme:'dark',limit:0,sched:false,from:'02:00',to:'06:00',ram:16,cpu:100,showHidden:false,density:'cozy'}
+};
+const STORE=[
+ {id:'orbit',name:'Orbit Wardens',genre:'Strategy',price:29.99,off:0,art:'art-space',rel:-20,rate:92,size:12},{id:'harbor',name:'Harbor Nights',genre:'Adventure',price:19.99,off:30,art:'art-city',rel:-90,rate:88,size:6.5},
+ {id:'cyber',name:'Circuit Break',genre:'Action RPG',price:39.99,off:50,art:'art-city',rel:-200,rate:95,size:45},{id:'farm',name:'Little Farm Co.',genre:'Simulation',price:0,off:0,art:'art-farm',rel:-300,rate:90,size:2.1},
+ {id:'arena',name:'Arena Rift',genre:'Co-op action',price:14.99,off:60,art:'hero-3',rel:-60,rate:81,size:19},{id:'puzzle',name:'Prism Puzzle',genre:'Puzzle',price:4.99,off:0,art:'art-puzzle',rel:-400,rate:86,size:0.4},
+ {id:'kart',name:'Turbo Kart Mini',genre:'Racing',price:9.99,off:20,art:'art-space',rel:-30,rate:79,size:3.3},{id:'dungeon',name:'Deep Dungeon Dice',genre:'Roguelike',price:12.99,off:0,art:'art-pixel',rel:-12,rate:90,size:1.2},
+ {id:'sky',name:'Skyline Tycoon',genre:'Simulation',price:24.99,off:15,art:'art-city',rel:-150,rate:84,size:8},{id:'ninja',name:'Ninja Relay',genre:'Arcade',price:0,off:0,art:'art-ninja',rel:-8,rate:77,size:0.8}
+];
+const UPCOMING=[['Aether Chronicle',12,'Action RPG'],['Rally Pocket 2',19,'Racing'],['Tiny Tactics',27,'Strategy'],['Echo Station',41,'Horror']];
+const FRIENDS=[['Mai Anh',2,'online',''],['Quang Huy',3,'ingame','Hunt Online'],['Linh Trang',4,'away',''],['Duc Minh',5,'ingame','Bomber Arena'],['Thu Ha',6,'offline','']];
+const PROGS=[['Notepad++','C:\\Program Files\\Notepad++\\notepad++.exe',0.1],['Blender','C:\\Program Files\\Blender\\blender.exe',1.6],['DOSBox-X','C:\\Emulators\\DOSBox\\dosbox-x.exe',0.2],['RetroArch','C:\\Emulators\\RetroArch\\retroarch.exe',0.5],['OBS Studio','C:\\Program Files\\obs-studio\\bin\\obs64.exe',0.4],['VLC media player','C:\\Program Files\\VideoLAN\\vlc.exe',0.2],['Paint.NET','C:\\Program Files\\paint.net\\paintdotnet.exe',0.1],['Mini Metro (portable)','D:\\Portable\\MiniMetro\\MiniMetro.exe',0.3]];
+const CLEAN=[['Download cache',1.8],['Shader cache',3.2],['Launcher logs',0.12],['Old installers',2.4],['Crash dumps',0.5]];
+const ACHI=['🏆','⚔️','🛡️','💎','🔥','🎯','🌟','🧭','🗝️','🐉','⚡','👑'];
+
+/* ---------------- state ---------------- */
+const EMBED=/[?&]embed/.test(location.search),KEY=EMBED?'gamedeck-embed-v1':'gamedeck-v1',ELECTRON=!!window.gdElectron;
+if(/[?&]fresh/.test(location.search))localStorage.removeItem(KEY);
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.games)S=JSON.parse(JSON.stringify(DEFAULT));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const U={tab:'library',sel:null,q:'',filter:'all',sort:'name',collapsed:{},running:null,launching:null,undo:null,storeQ:'',storeG:'All',storeSort:'pop',procSort:'cpu',scanned:null,cleanSel:{},scanning:false,speedHist:[],speed:0};
+const G=id=>S.games.find(g=>g.id===id);
+const fmtSize=g=>g>=1?g.toFixed(1)+' GB':Math.round(g*1024)+' MB';
+const fmtTime=ms=>{const h=Math.floor(ms/H),m=Math.floor(ms%H/60e3);return h?h+'h '+m+'m':m?m+'m':'—'};
+const ago=t=>{if(!t)return 'Never';const d=Date.now()-t;return d<H?Math.max(1,Math.round(d/60e3))+' min ago':d<D?Math.round(d/H)+' h ago':Math.round(d/D)+' d ago'};
+const hl=(t,q)=>{t=esc(t);if(!q)return t;const i=t.toLowerCase().indexOf(q.toLowerCase());return i<0?t:t.slice(0,i)+'<mark>'+t.slice(i,i+q.length)+'</mark>'+t.slice(i+q.length)};
+const hue=s=>[...s].reduce((a,c)=>a+c.charCodeAt(0)*7,0)%360;
+const tile=(g,px)=>g.icon?`<div class="tile" style="width:${px}px;height:${px}px"><img src="assets/${g.icon}.svg" alt=""></div>`:`<div class="tile" style="width:${px}px;height:${px}px;font-size:${px*.45}px;background:linear-gradient(135deg,hsl(${hue(g.name)} 70% 55%),hsl(${hue(g.name)+40} 70% 28%))">${esc(g.name.replace(/[^A-Za-z0-9 ]/g,'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`;
+const artBg=g=>g.art?`url(assets/${g.art}.svg)`:`linear-gradient(135deg,hsl(${hue(g.name)} 60% 35%),hsl(${hue(g.name)+50} 60% 18%))`;
+const dlOf=id=>S.dls.find(d=>d.gid===id);
+const diskUsed=()=>220+S.games.filter(g=>g.installed).reduce((a,g)=>a+g.size,0)-S.cleaned;
+
+/* ---------------- window chrome ---------------- */
+let maxed=EMBED||ELECTRON;if(maxed)document.body.classList.add('embed');if(ELECTRON)document.body.classList.add('electron');
+function fit(){const k=Math.min(innerWidth/1280,innerHeight/720)*(maxed?1:.94);$('#win').style.transform=`scale(${k})`;$('#win').classList.toggle('max',maxed)}
+addEventListener('resize',fit);fit();
+$('#wmax').onclick=()=>{if(ELECTRON)return window.gdElectron.maximize();maxed=!maxed;fit()};
+$('#wmin').onclick=()=>{if(ELECTRON)return window.gdElectron.minimize();$('#win').classList.add('min');$('#dock').classList.add('on')};
+$('#dock').onclick=()=>{$('#win').classList.remove('min');$('#dock').classList.remove('on')};
+$('#wx').onclick=()=>{stopGame(true);if(ELECTRON)return window.gdElectron.close();$('#closed').classList.add('on')};
+$('#reopen').onclick=()=>$('#closed').classList.remove('on');
+function wpos(e){const r=$('#win').getBoundingClientRect(),k=r.width/1280;return[(e.clientX-r.left)/k,(e.clientY-r.top)/k]}
+
+/* ---------------- toasts / notifications ---------------- */
+function notify(t){S.notes.unshift({t,ts:Date.now()});S.notes=S.notes.slice(0,30);$('#beldot').style.display='';save()}
+function toast(msg,undo){const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');LOG.push({k:'toast',t:msg.replace(/<[^>]+>/g,'')});el.innerHTML=`<b>${msg}</b>${undo?'<button>Undo</button>':''}`;$('#toasts').appendChild(el);
+  const kill=()=>el.remove();const t=setTimeout(kill,undo?7000:3500);if(undo)$('button',el).onclick=()=>{clearTimeout(t);undo();kill()};notify(msg.replace(/<[^>]+>/g,''))}
+$('#bell').onclick=e=>{e.stopPropagation();const n=$('#nl');n.classList.toggle('on');$('#beldot').style.display='none';n.innerHTML='<div class="h2" style="font-size:20px">Notifications</div>'+(S.notes.map(x=>`<div class="li"><span style="flex:1">${esc(x.t)}</span><small style="color:var(--mut)">${ago(x.ts)}</small></div>`).join('')||'<div class="empty">Nothing yet</div>')};
+$('#fbtn').onclick=e=>{e.stopPropagation();$('#fl').classList.toggle('on')};
+function drawFriends(){const on=FRIENDS.filter(f=>f[2]!=='offline').length;$('#fcnt').textContent='Friends ('+on+' online)';
+  $('#fl').innerHTML='<div class="h2" style="font-size:20px">Friends</div>'+FRIENDS.map(f=>`<div class="fr"><img src="assets/avatar-${f[1]}.svg" alt="" style="${f[2]==='offline'?'filter:grayscale(1);opacity:.5':''}"><div><b>${f[0]}</b><small style="color:${f[2]==='ingame'?'#4ade80':f[2]==='online'?'#60a5fa':'var(--mut)'}">${f[2]==='ingame'?'Playing '+f[3]:f[2]}</small></div></div>`).join('')}
+document.addEventListener('click',e=>{if(!e.target.closest('#nl,#bell'))$('#nl').classList.remove('on');if(!e.target.closest('#friends'))$('#fl').classList.remove('on');if(!e.target.closest('#cm'))closeCM()});
+
+/* ---------------- navigation ---------------- */
+const TABS=[['library','Library'],['store','Store'],['dl','Downloads'],['ctl','Control'],['set','Settings']];
+function drawNav(){$('#nav').innerHTML=TABS.map(([k,l])=>`<button role="tab" aria-selected="${U.tab===k}" data-testid="nav-${k}" class="nt ${U.tab===k?'on':''}" data-t="${k}">${l}${k==='dl'&&S.dls.length?`<span class="bdg">${S.dls.length}</span>`:''}</button>`).join('');$$('#nav .nt').forEach(b=>b.onclick=()=>go(b.dataset.t))}
+function go(t){U.tab=t;$$('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t));drawNav();({library:drawLibrary,store:drawStore,dl:drawDl,ctl:drawCtl,set:drawSet})[t]()}
+
+/* ---------------- LIBRARY ---------------- */
+function filtered(){const q=U.q.trim().toLowerCase();
+  let l=S.games.filter(g=>(S.s.showHidden||!g.hidden)&&(!q||g.name.toLowerCase().includes(q)||g.genre.toLowerCase().includes(q)));
+  const f=U.filter;l=l.filter(g=>f==='all'||(f==='installed'&&g.installed)||(f==='notinstalled'&&!g.installed)||(f==='running'&&U.running&&U.running.id===g.id)||(f==='update'&&g.update));
+  const s=U.sort,by={name:(a,b)=>a.name.localeCompare(b.name),played:(a,b)=>b.last-a.last,time:(a,b)=>b.playMs-a.playMs,size:(a,b)=>b.size-a.size,added:(a,b)=>b.added-a.added};return l.sort(by[s])}
+function groups(l){const out=[];const fav=l.filter(g=>g.fav&&!g.hidden);if(fav.length)out.push(['Favorites',fav]);
+  S.cols.forEach(c=>{const x=l.filter(g=>g.cols.includes(c)&&!g.hidden);if(x.length||!U.q)out.push([c,x])});
+  const un=l.filter(g=>!g.fav&&!g.cols.length&&!g.hidden);if(un.length)out.push(['Uncategorized',un]);
+  const hid=l.filter(g=>g.hidden);if(hid.length)out.push(['Hidden',hid]);return out}
+function stat(g){if(U.running&&U.running.id===g.id)return'<span class="stt run">RUNNING</span>';if(U.launching===g.id)return'<span class="stt">…</span>';const d=dlOf(g.id);if(d)return`<span class="stt dn">${Math.round(d.done/g.size*100)}%</span>`;if(g.update&&g.installed)return'<span class="stt dn">UPDATE</span>';return g.hidden?ic('eyeoff',13):''}
+function drawList(){const l=filtered(),gs=groups(l);$('#glist').innerHTML=gs.map(([n,arr])=>`<div class="gh ${U.collapsed[n]?'c':''}" data-g="${esc(n)}">${ic('chev',12)}${esc(n)}<span class="n">${arr.length}</span></div>`+(U.collapsed[n]?'':arr.map(g=>`<div role="listitem" aria-label="${esc(g.name)}" data-testid="game-row-${g.id}" class="gi ${g.installed?'':'off'} ${U.sel===g.id?'sel':''}" data-id="${g.id}">${tile(g,28)}<span class="nm">${hl(g.name,U.q.trim())}</span>${stat(g)}</div>`).join(''))).join('')||`<div class="empty"><b>No results</b>No game matches “${esc(U.q)}”.<br><br><button class="btn sm" id="clrq">Clear search</button></div>`;
+  $$('#glist .gh').forEach(h=>h.onclick=()=>{U.collapsed[h.dataset.g]=!U.collapsed[h.dataset.g];drawList()});
+  $$('#glist .gi').forEach(e=>{e.onclick=()=>{U.sel=e.dataset.id;drawList();drawMain()};e.ondblclick=()=>playOrInstall(e.dataset.id);e.oncontextmenu=ev=>{ev.preventDefault();U.sel=e.dataset.id;drawList();openCM(ev,e.dataset.id)}});
+  const c=$('#clrq');if(c)c.onclick=()=>{$('#lq').value='';U.q='';drawLibrary()};
+  const pct=diskUsed()/512*100;$('#dsk').style.width=Math.min(100,pct)+'%';$('#dsktx').textContent=Math.round(diskUsed())+' / 512 GB';$('#sbox').classList.toggle('has',!!U.q)}
+function drawLibrary(){drawList();drawMain()}
+function drawMain(){const m=$('#lmain'),g=U.sel&&G(U.sel);
+  if(g){drawDetail(m,g);return}
+  const l=filtered();
+  const head=`<div class="scr"><div class="bar"><div class="h2" style="margin:0">All games <small style="margin-left:10px">${l.length} of ${S.games.length}</small></div><span class="sp"></span><label class="trow" style="gap:8px;padding:0"><span style="color:var(--mut);font-size:12px">Show hidden</span><span class="tg ${S.s.showHidden?'on':''}" id="tgh"></span></label><div class="seg"><button data-v="grid" class="${S.s.view==='grid'?'on':''}" title="Grid (G)">${ic('grid')}</button><button data-v="list" class="${S.s.view==='list'?'on':''}" title="List (G)">${ic('list')}</button></div></div>`;
+  let body;
+  if(!l.length)body=`<div class="empty"><b>${S.games.length?'Nothing here':'Your library is empty'}</b>${S.games.length?'Try another search or filter.':'Add a game or install one from the Store.'}</div>`;
+  else if(S.s.view==='grid')body=`<div class="grid">${l.map(g=>`<div role="button" aria-label="Open ${esc(g.name)}" data-testid="game-card-${g.id}" class="gc ${g.installed?'':'off'} ${U.sel===g.id?'sel':''}" data-id="${g.id}"><div class="art" style="background-image:${artBg(g)}"><div class="bd">${g.fav?`<span class="pill fav">${ic('heart',12)}</span>`:''}${g.hidden?`<span class="pill">${ic('eyeoff',12)}</span>`:''}${g.update&&g.installed?`<span class="pill" style="background:var(--accent)">${ic('up',12)}</span>`:''}</div>${tile(g,44)}</div><div class="info"><b>${hl(g.name,U.q.trim())}</b><small>${esc(g.genre)} · ${g.installed?fmtSize(g.size):'Not installed'}</small></div></div>`).join('')}</div>`;
+  else body=`<table class="lt"><thead><tr><th>Name</th><th>Genre</th><th>Play time</th><th>Last played</th><th>Size</th><th></th></tr></thead><tbody>${l.map(g=>`<tr class="r ${U.sel===g.id?'sel':''}" data-id="${g.id}"><td><div style="display:flex;align-items:center;gap:10px">${tile(g,26)}<b>${hl(g.name,U.q.trim())}</b>${g.fav?`<span style="color:#f87171">${ic('heart',13)}</span>`:''}</div></td><td>${esc(g.genre)}</td><td>${fmtTime(g.playMs)}</td><td>${ago(g.last)}</td><td>${g.installed?fmtSize(g.size):'—'}</td><td>${stat(g)}</td></tr>`).join('')}</tbody></table>`;
+  m.innerHTML=head+body+'</div>';
+  $('#tgh').onclick=()=>{S.s.showHidden=!S.s.showHidden;save();drawLibrary()};
+  $$('.seg button',m).forEach(b=>b.onclick=()=>{S.s.view=b.dataset.v;save();drawMain()});
+  $$('[data-id]',m).forEach(e=>{e.onclick=()=>{U.sel=e.dataset.id;drawLibrary()};e.ondblclick=()=>playOrInstall(e.dataset.id);e.oncontextmenu=ev=>{ev.preventDefault();U.sel=e.dataset.id;drawList();openCM(ev,e.dataset.id)};
+    if(e.classList.contains('gc'))e.onmousemove=ev=>{const r=e.getBoundingClientRect(),k=r.width/e.offsetWidth;e.style.setProperty('--mx',(ev.clientX-r.left)/k+'px');e.style.setProperty('--my',(ev.clientY-r.top)/k+'px')}})}
+function drawDetail(m,g){const run=U.running&&U.running.id===g.id,d=dlOf(g.id),launching=U.launching===g.id;
+  let main;
+  if(run)main=`<button class="btn red" id="dstop">${ic('stop')}Stop</button>`;
+  else if(launching)main=`<button class="btn pri" disabled><span class="spin"></span>Launching…</button>`;
+  else if(d)main=`<button class="btn" id="dgo">${ic('dl')}Downloading ${Math.round(d.done/g.size*100)}% · view</button>`;
+  else if(!g.installed)main=`<button class="btn pri" id="dplay">${ic('dl')}Install · ${fmtSize(g.size)}</button>`;
+  else if(g.update)main=`<button class="btn pri" id="dplay">${ic('up')}Update · then play</button>`;
+  else main=`<button class="btn grn" id="dplay">${ic('play')}Play</button>`;
+  const total=g.ach[1],done=g.ach[0],friendsHere=FRIENDS.filter(f=>f[2]==='ingame'&&f[3]===g.name);
+  m.innerHTML=`<div class="hero" style="background-image:${artBg(g)}"><div class="in">${tile(g,84)}<div style="flex:1"><div style="display:flex;gap:8px;margin-bottom:8px"><span class="chip ac">${esc(g.genre)}</span>${g.src==='custom'?'<span class="chip">Non-store</span>':''}${g.fav?'<span class="chip" style="color:#f87171">♥ Favorite</span>':''}${g.hidden?'<span class="chip">Hidden</span>':''}</div><h1>${esc(g.name)}</h1></div><button class="btn sm" id="dback">‹ All games</button></div></div>
+  <div class="acts">${main}<button class="btn" id="dfav" title="Favorite (F)">${ic('heart')}${g.fav?'Unfavorite':'Favorite'}</button><button class="btn" id="dman">${ic('dots')}Manage</button>
+    <div class="meta"><div><small>Play time</small><b>${fmtTime(g.playMs+(run?Date.now()-U.running.t:0))}</b></div><div><small>Last played</small><b>${run?'Now':ago(g.last)}</b></div><div><small>Size</small><b>${g.installed?fmtSize(g.size):'—'}</b></div><div><small>Version</small><b>${g.version}</b></div></div></div>
+  <div class="dgrid"><div class="card"><div class="h2">Achievements <small>${done} / ${total}</small></div><div class="prog"><i style="width:${total?done/total*100:0}%"></i></div><div class="ach">${ACHI.slice(0,total).map((a,i)=>`<span class="${i<done?'on':''}">${a}</span>`).join('')}</div>
+     <div class="h2" style="margin-top:22px">Activity</div>${[['Played '+fmtTime(g.playMs)+' in total',g.last],['Cloud save synced',g.last+60e3],['Added to library',g.added]].map(a=>`<div class="li"><span style="flex:1">${a[0]}</span><small style="color:var(--mut)">${ago(a[1])}</small></div>`).join('')}</div>
+   <div class="card"><div class="h2">Friends who play</div>${friendsHere.length?friendsHere.map(f=>`<div class="fr"><img src="assets/avatar-${f[1]}.svg" alt=""><div><b>${f[0]}</b><small style="color:#4ade80">Playing now</small></div></div>`).join(''):'<div style="color:var(--mut)">None of your friends are playing right now.</div>'}
+     <div class="h2" style="margin-top:22px">Cloud &amp; files</div><div class="trow"><span>${ic('cloud')} Cloud saves</span><span class="chip ok">In sync</span></div><div class="trow"><span>Install path</span></div><small style="font:11.5px ui-monospace,Consolas,monospace;color:var(--mut);word-break:break-all">${esc(g.path)}</small></div></div>`;
+  $('#dback').onclick=()=>{U.sel=null;drawLibrary()};$('#dfav').onclick=()=>toggleFav(g.id);$('#dman').onclick=e=>{e.stopPropagation();openCM(e,g.id)};
+  const p=$('#dplay');if(p)p.onclick=()=>playOrInstall(g.id);const s=$('#dstop');if(s)s.onclick=()=>stopGame();const dg=$('#dgo');if(dg)dg.onclick=()=>go('dl')}
+
+/* ---------------- game actions ---------------- */
+function toggleFav(id){const g=G(id);g.fav=!g.fav;save();toast(`${esc(g.name)} ${g.fav?'added to':'removed from'} favorites`);drawLibrary()}
+function toggleHide(id){const g=G(id);g.hidden=!g.hidden;save();toast(`${esc(g.name)} ${g.hidden?'hidden':'unhidden'}`,()=>{g.hidden=!g.hidden;save();drawLibrary()});drawLibrary()}
+function queueInstall(id,kind='install'){const g=G(id);if(dlOf(id))return;S.dls.push({gid:id,kind,done:kind==='update'?g.size*.7:0,paused:false});save();toast(`${esc(g.name)} added to the download queue`);drawNav();if(U.tab==='dl')drawDl();drawLibrary()}
+function playOrInstall(id){const g=G(id);if(!g.installed)return queueInstall(id);if(g.update&&!dlOf(id))return queueInstall(id,'update');if(dlOf(id))return go('dl');launch(id)}
+function launch(id){const g=G(id);if(U.running)stopGame(true);U.launching=id;drawLibrary();setTimeout(()=>{if(U.launching!==id)return;U.launching=null;U.running={id,t:Date.now()};g.last=Date.now();save();drawNpl();drawLibrary();toast(`Launched ${esc(g.name)}`)},1300)}
+function stopGame(silent){if(U.launching){U.launching=null}if(!U.running){drawLibrary();return}const g=G(U.running.id),el=Date.now()-U.running.t;g.playMs+=el*30;/* demo: 1 s = 30 s of play time */g.last=Date.now();if(!silent)toast(`${esc(g.name)} closed · +${fmtTime(el*30)} played`);U.running=null;save();drawNpl();drawLibrary();if(U.tab==='ctl')drawCtl()}
+function drawNpl(){const r=U.running,n=$('#np');n.classList.toggle('on',!!r);if(r){const s=Math.floor((Date.now()-r.t)/1000);$('#npt').textContent='Playing '+G(r.id).name+' · '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}}
+$('#npstop').onclick=()=>stopGame();
+function uninstall(id){const g=G(id);confirmDlg(`Uninstall ${esc(g.name)}?`,`This deletes the game files and frees <b>${fmtSize(g.size)}</b>. Your cloud saves and playtime are kept, and you can reinstall any time.`,'Uninstall',()=>{if(U.running&&U.running.id===id)stopGame(true);S.dls=S.dls.filter(d=>d.gid!==id);g.installed=false;g.update=false;save();toast(`${esc(g.name)} uninstalled · freed ${fmtSize(g.size)}`,()=>{g.installed=true;save();drawLibrary()});drawNav();drawLibrary()})}
+function removeGame(id){const g=G(id),i=S.games.indexOf(g);confirmDlg(`Remove ${esc(g.name)} from your library?`,g.src==='custom'?'The shortcut is removed from GameDeck. The program itself is not deleted from your disk.':'The game disappears from your library and its files are deleted. You can add it again from the Store.','Remove',()=>{if(U.running&&U.running.id===id)stopGame(true);S.dls=S.dls.filter(d=>d.gid!==id);S.games.splice(i,1);if(U.sel===id)U.sel=null;save();toast(`${esc(g.name)} removed from library`,()=>{S.games.splice(i,0,g);save();drawLibrary()});drawNav();drawLibrary()},true)}
+
+/* ---------------- context menu ---------------- */
+function closeCM(){$('#cm').classList.remove('on')}
+function openCM(e,id){const g=G(id),cm=$('#cm'),run=U.running&&U.running.id===id;
+  const colItems=S.cols.map(c=>`<button data-act="col" data-c="${esc(c)}">${g.cols.includes(c)?ic('check',14):'<span style="width:14px"></span>'}${esc(c)}</button>`).join('')+`<button data-act="newcol">${ic('plus',14)}New collection…</button>`;
+  cm.innerHTML=`<button data-act="play">${ic(run?'stop':g.installed?'play':'dl',14)}${run?'Stop':g.installed?(g.update?'Update':'Play'):'Install'}<span class="kb">Enter</span></button><hr>
+  <button data-act="fav">${ic('heart',14)}${g.fav?'Remove from favorites':'Add to favorites'}<span class="kb">F</span></button>
+  <button data-act="coltog">${ic('tag',14)}Add to collection<span class="kb">▸</span></button><div class="sub" id="csub">${colItems}</div>
+  <button data-act="hide">${ic(g.hidden?'eye':'eyeoff',14)}${g.hidden?'Unhide this game':'Hide this game'}</button><hr>
+  <button data-act="props">${ic('props',14)}Properties…</button><button data-act="files" ${g.installed?'':'disabled style="opacity:.4"'}>${ic('folder',14)}Browse local files</button><hr>
+  ${g.installed?`<button class="d" data-act="uninstall">${ic('trash',14)}Uninstall</button>`:''}<button class="d" data-act="remove">${ic('x',14)}Remove from library<span class="kb">Del</span></button>`;
+  const [x,y]=e.currentTarget&&e.currentTarget.id==='dman'?[0,0]:wpos(e);let px=x,py=y;
+  if(e.currentTarget&&e.currentTarget.id==='dman'){const r=e.currentTarget.getBoundingClientRect(),w=$('#win').getBoundingClientRect(),k=w.width/1280;px=(r.left-w.left)/k;py=(r.bottom-w.top)/k+4}
+  cm.setAttribute('role','menu');$$('button',cm).forEach(b=>b.setAttribute('role','menuitem'));cm.classList.add('on');cm.style.left=Math.min(px,1280-250)+'px';cm.style.top=Math.min(py,720-cm.offsetHeight-8)+'px';
+  $$('button',cm).forEach(b=>b.onclick=ev=>{ev.stopPropagation();const a=b.dataset.act;
+    if(a==='coltog'){$('#csub').classList.toggle('on');return}
+    if(a==='col'){const c=b.dataset.c;g.cols=g.cols.includes(c)?g.cols.filter(x=>x!==c):[...g.cols,c];save();closeCM();toast(`${esc(g.name)} · collection “${esc(c)}” updated`);drawLibrary();return}
+    closeCM();({play:()=>run?stopGame():playOrInstall(id),fav:()=>toggleFav(id),hide:()=>toggleHide(id),props:()=>propsDlg(id),files:()=>toast('Opened '+esc(g.path.replace(/\\[^\\]*$/,''))+' in Explorer (simulated)'),uninstall:()=>uninstall(id),remove:()=>removeGame(id),newcol:()=>newColDlg(id)})[a]()})}
+
+/* ---------------- dialogs ---------------- */
+function showDlg(html,cls=''){const ov=$('#ov');ov.innerHTML=`<div class="dlg ${cls}" role="dialog" aria-modal="true">${html}</div>`;ov.classList.add('on');return ov}
+function closeDlg(){$('#ov').classList.remove('on');$('#ov').innerHTML=''}
+$('#ov').addEventListener('mousedown',e=>{if(e.target.id==='ov')closeDlg()});
+function confirmDlg(title,text,ok,fn,danger){showDlg(`<div class="hd"><h3>${title}</h3><button class="ib" data-x>${ic('x')}</button></div><div class="bd" style="line-height:1.6;color:var(--mut)">${text}</div><div class="ft"><button class="btn" data-x>Cancel</button><button class="btn ${danger?'red':'pri'}" id="okb">${ok}</button></div>`);$$('#ov [data-x]').forEach(b=>b.onclick=closeDlg);$('#okb').onclick=()=>{closeDlg();fn()};$('#okb').focus()}
+function newColDlg(id){showDlg(`<div class="hd"><h3>New collection</h3><button class="ib" data-x>${ic('x')}</button></div><div class="bd"><div class="fld"><label for="cn">Name</label><input class="inp" id="cn" placeholder="e.g. Weekend, Finished, Co-op" maxlength="24"></div><div class="err" id="ce"></div></div><div class="ft"><button class="btn" data-x>Cancel</button><button class="btn pri" id="cok">Create</button></div>`);$$('#ov [data-x]').forEach(b=>b.onclick=closeDlg);$('#cn').focus();
+  const ok=()=>{const n=$('#cn').value.trim();if(!n)return $('#ce').textContent='Give the collection a name.';if(S.cols.some(c=>c.toLowerCase()===n.toLowerCase()))return $('#ce').textContent='That collection already exists.';S.cols.push(n);if(id)G(id).cols.push(n);save();closeDlg();toast(`Collection “${esc(n)}” created`);drawLibrary()};$('#cok').onclick=ok;$('#cn').onkeydown=e=>{if(e.key==='Enter')ok()}}
+function propsDlg(id){const g=G(id);showDlg(`<div class="hd"><h3>${esc(g.name)} · Properties</h3><button class="ib" data-x>${ic('x')}</button></div><div class="bd">
+  <div class="fld"><label for="pn">Name</label><input class="inp" id="pn" value="${esc(g.name)}" maxlength="40"></div>
+  <div class="fld"><label for="po">Launch options</label><input class="inp" id="po" value="${esc(g.opts)}" placeholder="e.g. -windowed -novid"></div>
+  <div class="fld"><label>Executable / install path</label><input class="inp" id="pp" value="${esc(g.path)}" ${g.src==='custom'?'':'readonly style="opacity:.6"'}></div>
+  <div class="fld"><label>Updates</label><select class="inp" id="pu"><option value="always">Always keep this game up to date</option><option value="launch">Only update when I launch it</option><option value="sched">Only during the download schedule</option></select></div>
+  <div class="fld"><label>Collections</label><div>${S.cols.map(c=>`<label style="display:inline-flex;gap:6px;margin:0 14px 6px 0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--tx);font-weight:500"><input type="checkbox" class="pc" value="${esc(c)}" ${g.cols.includes(c)?'checked':''} style="accent-color:var(--accent)">${esc(c)}</label>`).join('')}</div></div>
+  <div class="trow"><span>Verify integrity of game files</span><button class="btn sm" id="pv" ${g.installed?'':'disabled'}>Verify</button></div><div class="prog" style="display:none" id="pvb"><i style="width:0"></i></div><div class="err" id="pe"></div></div>
+  <div class="ft"><button class="btn" data-x>Cancel</button><button class="btn pri" id="pok">Save</button></div>`);
+  $('#pu').value=g.upd;$$('#ov [data-x]').forEach(b=>b.onclick=closeDlg);
+  $('#pv').onclick=()=>{const b=$('#pvb');b.style.display='block';let p=0;const t=setInterval(()=>{p+=7;$('i',b).style.width=Math.min(p,100)+'%';if(p>=100){clearInterval(t);toast(`${esc(g.name)}: all files verified`)}},90)};
+  $('#pok').onclick=()=>{const n=$('#pn').value.trim();if(!n)return $('#pe').textContent='Name cannot be empty.';g.name=n;g.opts=$('#po').value;g.upd=$('#pu').value;if(g.src==='custom')g.path=$('#pp').value;g.cols=$$('.pc').filter(c=>c.checked).map(c=>c.value);save();closeDlg();toast('Properties saved');drawLibrary()}}
+function addDlg(tab='scan'){const sel={};
+  const draw=()=>{showDlg(`<div class="hd"><h3>Add a game</h3><button class="ib" data-x>${ic('x')}</button></div><div class="bd"><div class="tabs"><button data-t="scan" class="${tab==='scan'?'on':''}">Programs on this PC</button><button data-t="manual" class="${tab==='manual'?'on':''}">Manual entry</button></div>
+   ${tab==='scan'?`<input class="inp" id="sq" placeholder="Filter detected programs" style="margin-bottom:8px"><div id="sl">${scanList('')}</div>`:`<div class="fld"><label for="mn">Name</label><input class="inp" id="mn" placeholder="My game"></div><div class="fld"><label for="mp">Executable path</label><input class="inp" id="mp" placeholder="C:\\Games\\MyGame\\game.exe"></div><div class="fld"><label>Icon colour</label><div class="sw" id="msw">${[10,40,140,200,265,320].map((h,i)=>`<button data-h="${h}" class="${i===0?'on':''}" style="background:hsl(${h} 70% 50%)"></button>`).join('')}</div></div><div class="err" id="me"></div>`}</div>
+   <div class="ft"><button class="btn" data-x>Cancel</button><button class="btn pri" id="aok">${tab==='scan'?'Add selected programs':'Add game'}</button></div>`);
+   $$('#ov [data-x]').forEach(b=>b.onclick=closeDlg);$$('#ov .tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+   if(tab==='scan'){$('#sq').oninput=e=>{$('#sl').innerHTML=scanList(e.target.value);bind()};bind();$('#aok').onclick=()=>{const ids=Object.keys(sel).filter(k=>sel[k]);if(!ids.length)return toast('Select at least one program');ids.forEach(i=>addCustom(PROGS[i][0],PROGS[i][1],hue(PROGS[i][0]),PROGS[i][2]));closeDlg();toast(`Added ${ids.length} program${ids.length>1?'s':''} to your library`);drawLibrary()}}
+   else{let h=10;$$('#msw button').forEach(b=>b.onclick=()=>{$$('#msw button').forEach(x=>x.classList.remove('on'));b.classList.add('on');h=+b.dataset.h});$('#mn').focus();$('#aok').onclick=()=>{const n=$('#mn').value.trim(),p=$('#mp').value.trim();if(!n)return $('#me').textContent='Enter a name.';if(S.games.some(g=>g.name.toLowerCase()===n.toLowerCase()))return $('#me').textContent='A game with this name is already in your library.';if(!/^([A-Za-z]:\\|\/).+\.(exe|lnk|app|sh|bat)$/i.test(p))return $('#me').textContent='Enter a full path ending in .exe, .lnk, .app, .sh or .bat.';const g=addCustom(n,p,h,0.5);closeDlg();U.sel=g.id;toast(`${esc(n)} added to your library`);drawLibrary()}}};
+  const scanList=q=>PROGS.map((p,i)=>({p,i})).filter(({p})=>p[0].toLowerCase().includes(q.toLowerCase())).map(({p,i})=>`<label class="scan"><input type="checkbox" data-i="${i}" ${sel[i]?'checked':''}><div><b>${esc(p[0])}</b><small>${esc(p[1])}</small></div></label>`).join('')||'<div class="empty">No program matches.</div>';
+  const bind=()=>$$('#sl input').forEach(c=>c.onchange=()=>sel[c.dataset.i]=c.checked);draw()}
+function addCustom(name,path,h,size){const id='c'+Date.now()+Math.floor(Math.random()*999);const g=mk(id,name,null,null,'Non-store',size,{src:'custom',path,added:Date.now(),ach:[0,0]});g.version='—';S.games.push(g);save();return g}
+$('#addg').onclick=()=>addDlg();
+
+/* ---------------- STORE (with GX-Corner-like releases + deals) ---------------- */
+function drawStore(){const q=U.storeQ.toLowerCase(),gs=['All',...new Set(STORE.map(s=>s.genre))];
+  let l=STORE.filter(s=>(U.storeG==='All'||s.genre===U.storeG)&&(!q||s.name.toLowerCase().includes(q)||s.genre.toLowerCase().includes(q)));
+  l.sort({pop:(a,b)=>b.rate-a.rate,price:(a,b)=>a.price*(1-a.off/100)-b.price*(1-b.off/100),name:(a,b)=>a.name.localeCompare(b.name),disc:(a,b)=>b.off-a.off}[U.storeSort]);
+  const deals=STORE.filter(s=>s.off).sort((a,b)=>b.off-a.off).slice(0,4),dt=n=>{const d=new Date(Date.now()+n*D);return`<div class="dt">${d.getDate()}<small>${d.toLocaleString('en',{month:'short'}).toUpperCase()}</small></div>`};
+  $('#store').innerHTML=`<div class="h2">Corner <small>Releases &amp; deals</small></div><div class="corner"><div class="card"><b>Upcoming releases</b>${UPCOMING.map(u=>`<div class="li">${dt(u[1])}<div style="flex:1"><b>${u[0]}</b><br><small style="color:var(--mut)">${u[2]}</small></div><button class="btn sm" data-wl="${esc(u[0])}">Remind me</button></div>`).join('')}</div><div class="card"><b>Hot deals</b>${deals.map(s=>`<div class="li"><div class="tile" style="width:38px;height:38px;background:linear-gradient(135deg,hsl(${hue(s.name)} 70% 50%),hsl(${hue(s.name)+40} 70% 25%));font-size:16px">${s.name[0]}</div><div style="flex:1"><b>${s.name}</b><br><small style="color:var(--mut)">${s.genre}</small></div><span class="chip ok">-${s.off}%</span><b>$${(s.price*(1-s.off/100)).toFixed(2)}</b></div>`).join('')}</div></div>
+  <div class="bar"><div class="h2" style="margin:0">Store <small style="margin-left:10px">${l.length} titles</small></div><span class="sp"></span><div class="sbox" style="width:240px"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="inp" id="stq" placeholder="Search the store" value="${esc(U.storeQ)}"></div><select class="inp" id="stg" style="width:150px">${gs.map(x=>`<option ${x===U.storeG?'selected':''}>${x}</option>`).join('')}</select><select class="inp" id="sts" style="width:150px"><option value="pop">Top rated</option><option value="disc">Biggest discount</option><option value="price">Price</option><option value="name">A–Z</option></select></div>
+  <div class="hl">${l.map(s=>{const inLib=G(s.id)||S.games.some(g=>g.name===s.name),w=S.wish.includes(s.id),pr=s.price*(1-s.off/100);return`<div class="sc"><div class="art" style="background-image:url(assets/${s.art}.svg)">${s.off?`<span class="disc">-${s.off}%</span>`:''}<button class="hrt ${w?'on':''}" data-w="${s.id}" title="Wishlist">${ic('heart',15)}</button></div><div class="bd"><b>${hl(s.name,U.storeQ.trim())}</b><small>${s.genre} · ★ ${s.rate} · ${fmtSize(s.size)}</small><div class="ft"><span class="price">${s.price?(s.off?`<s>$${s.price.toFixed(2)}</s>`:'')+'$'+pr.toFixed(2):'Free'}</span>${inLib?'<span class="chip ok">In library</span>':`<button class="btn sm pri" data-buy="${s.id}">${s.price?'Buy &amp; install':'Install'}</button>`}</div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1"><b>No titles found</b>Try another search or genre.</div>'}</div>`;
+  $('#sts').value=U.storeSort;$('#stq').oninput=e=>{U.storeQ=e.target.value;const p=e.target.selectionStart;drawStore();const n=$('#stq');n.focus();n.setSelectionRange(p,p)};$('#stg').onchange=e=>{U.storeG=e.target.value;drawStore()};$('#sts').onchange=e=>{U.storeSort=e.target.value;drawStore()};
+  $$('[data-w]').forEach(b=>b.onclick=()=>{const i=b.dataset.w;S.wish=S.wish.includes(i)?S.wish.filter(x=>x!==i):[...S.wish,i];save();toast(S.wish.includes(i)?'Added to wishlist':'Removed from wishlist');drawStore()});
+  $$('[data-wl]').forEach(b=>b.onclick=()=>toast(`We will remind you when ${esc(b.dataset.wl)} launches`));
+  $$('[data-buy]').forEach(b=>b.onclick=()=>{const s=STORE.find(x=>x.id===b.dataset.buy),g=mk(s.id,s.name,null,s.art,s.genre,s.size,{installed:false,added:Date.now(),ach:[0,12]});S.games.push(g);save();toast(`${esc(s.name)} added to your library`);queueInstall(s.id);drawStore()})}
+
+/* ---------------- DOWNLOADS (Steam-style manager) ---------------- */
+const inWindow=()=>{if(!S.s.sched)return true;const n=new Date(),m=n.getHours()*60+n.getMinutes(),f=S.s.from.split(':'),t=S.s.to.split(':'),a=+f[0]*60+ +f[1],b=+t[0]*60+ +t[1];return a<=b?m>=a&&m<b:m>=a||m<b};
+function drawDl(){const q=S.dls,sp=U.speed;
+  $('#dls').innerHTML=`<div class="dl"><div><div class="bar"><div class="h2" style="margin:0">Download queue <small style="margin-left:10px">${q.length} item${q.length===1?'':'s'}</small></div><span class="sp"></span><button class="btn sm" id="pa">${q.every(d=>d.paused)&&q.length?'Resume all':'Pause all'}</button></div>
+  ${q.map((d,i)=>{const g=G(d.gid),p=d.done/g.size;const act=i===q.findIndex(x=>!x.paused);return`<div class="dq" role="listitem" data-testid="download-item">${tile(g,44)}<div class="c"><b>${esc(g.name)}</b> <span class="chip ${d.kind==='update'?'wr':'ac'}" style="margin-left:6px">${d.kind}</span><div class="prog"><i style="width:${p*100}%"></i></div><small>${fmtSize(d.done)} of ${fmtSize(g.size)} · ${d.paused?'Paused':act?(inWindow()?(sp?sp.toFixed(1)+' MB/s':'Starting…'):'Waiting for schedule'):'Queued'}</small></div><div style="display:flex;gap:4px"><button class="ib" data-up="${i}" title="Move up" ${i?'':'disabled style="opacity:.3"'}>${ic('up')}</button><button class="ib" data-down="${i}" title="Move down" ${i<q.length-1?'':'disabled style="opacity:.3"'}>${ic('down')}</button><button class="ib" data-p="${i}" title="${d.paused?'Resume':'Pause'}">${ic(d.paused?'play':'pause')}</button><button class="ib" data-c="${i}" title="Cancel">${ic('x')}</button></div></div>`}).join('')||`<div class="empty"><b>Nothing downloading</b>Install a game from your library or the Store.</div>`}</div>
+  <div><div class="card" style="margin-bottom:14px"><div class="h2">Network <small>${sp.toFixed(1)} MB/s</small></div><canvas id="spark" width="300" height="90"></canvas><small style="color:var(--mut)">Demo runs downloads about 12× faster than real time.</small></div>
+  <div class="card"><div class="h2">Download settings</div><div class="fld"><label for="lim">Limit bandwidth to</label><select class="inp" id="lim">${[[0,'No limit'],[2,'2 MB/s'],[5,'5 MB/s'],[10,'10 MB/s'],[25,'25 MB/s'],[50,'50 MB/s']].map(o=>`<option value="${o[0]}" ${S.s.limit==o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>
+  <div class="trow"><span>Only auto-update between</span><span class="tg ${S.s.sched?'on':''}" id="tgs"></span></div><div class="row2" style="display:flex;gap:8px;opacity:${S.s.sched?1:.4}"><input type="time" class="inp" id="tf" value="${S.s.from}" ${S.s.sched?'':'disabled'}><input type="time" class="inp" id="tt" value="${S.s.to}" ${S.s.sched?'':'disabled'}></div><small style="color:var(--mut)">The limit and the schedule are independent, as in Steam.</small></div></div></div>`;
+  $$('[data-p]').forEach(b=>b.onclick=()=>{q[+b.dataset.p].paused=!q[+b.dataset.p].paused;save();drawDl()});
+  $$('[data-c]').forEach(b=>b.onclick=()=>{const d=q.splice(+b.dataset.c,1)[0];save();toast(`Download of ${esc(G(d.gid).name)} cancelled`,()=>{q.splice(+b.dataset.c,0,d);save();drawDl()});drawNav();drawDl();drawLibrary()});
+  $$('[data-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.up;[q[i-1],q[i]]=[q[i],q[i-1]];save();drawDl()});$$('[data-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.down;[q[i+1],q[i]]=[q[i],q[i+1]];save();drawDl()});
+  $('#pa').onclick=()=>{const all=q.every(d=>d.paused);q.forEach(d=>d.paused=!all);save();drawDl()};
+  $('#lim').onchange=e=>{S.s.limit=+e.target.value;save();toast(S.s.limit?`Download limit set to ${S.s.limit} MB/s`:'Download limit removed')};
+  $('#tgs').onclick=()=>{S.s.sched=!S.s.sched;save();drawDl()};if($('#tf')){$('#tf').onchange=e=>{S.s.from=e.target.value;save()};$('#tt').onchange=e=>{S.s.to=e.target.value;save()}}
+  spark()}
+function spark(){const c=$('#spark');if(!c)return;const x=c.getContext('2d'),w=c.width,h=c.height,hist=U.speedHist,max=Math.max(60,...hist,S.s.limit||0);x.clearRect(0,0,w,h);
+  if(S.s.limit){const y=h-S.s.limit/max*h;x.setLineDash([4,4]);x.strokeStyle='rgba(255,255,255,.5)';x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();x.setLineDash([])}
+  x.beginPath();hist.forEach((v,i)=>{const px=i/(40-1)*w,py=h-v/max*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.strokeStyle=S.s.accent;x.lineWidth=2;x.stroke();x.lineTo(w,h);x.lineTo(0,h);x.closePath();x.fillStyle=S.s.accent+'33';x.fill()}
+setInterval(()=>{let sp=0;const act=S.dls.find(d=>!d.paused);
+  if(act&&inWindow()){const base=48+Math.random()*14;sp=S.s.limit?Math.min(S.s.limit,base):base;const g=G(act.gid);act.done+=sp*0.5*12/1024;
+    if(act.done>=g.size){S.dls.splice(S.dls.indexOf(act),1);const upd=act.kind==='update';g.installed=true;g.update=false;if(upd)g.version=g.version.replace(/\d+$/,x=>+x+1);save();toast(`${esc(g.name)} ${upd?'updated':'installed'} — ready to play`);drawNav();if(U.tab==='dl')drawDl();drawLibrary()}}
+  U.speed=sp;U.speedHist.push(sp);if(U.speedHist.length>40)U.speedHist.shift();
+  if(U.tab==='dl'&&act){$$('#dls .dq')[S.dls.indexOf(act)]&&drawDlLive()}if(U.tab==='ctl')liveCtl();drawNpl()},500);
+function drawDlLive(){const q=S.dls;$$('#dls .dq').forEach((el,i)=>{const d=q[i];if(!d)return;const g=G(d.gid);$('.prog i',el).style.width=d.done/g.size*100+'%';const act=i===q.findIndex(x=>!x.paused);$('small',el).textContent=`${fmtSize(d.done)} of ${fmtSize(g.size)} · ${d.paused?'Paused':act?(inWindow()?(U.speed?U.speed.toFixed(1)+' MB/s':'Starting…'):'Waiting for schedule'):'Queued'}`});const h=$('#dls .card .h2 small');if(h)h.textContent=U.speed.toFixed(1)+' MB/s';spark();const sel=$('#lmain .acts');}
+
+/* ---------------- CONTROL (GX Control-style) ---------------- */
+function procs(){const out=[['GameDeck UI',3,0.4,0],['Cloud sync service',U.running?1:0.4,0.2,0],['Overlay & chat',2,0.3,0]];if(S.dls.some(d=>!d.paused))out.push(['Download service',9,0.5,0]);if(U.running){const g=G(U.running.id);out.push([g.name,Math.min(S.s.cpu,22+Math.random()*14|0),Math.min(S.s.ram,+(Math.min(g.size/6+1.5,9)).toFixed(1)),U.running.id])}return out}
+function drawCtl(){$('#ctl').innerHTML=`<div class="h2">Control <small>Limit what the launcher and your games can use</small></div>
+  <div class="cg"><div class="card"><b>RAM limiter</b><div class="gauge"><i id="gr"></i><u id="gru"></u></div><small style="color:var(--mut)" id="grt"></small><input type="range" min="2" max="32" step="1" value="${S.s.ram}" id="rr"><div class="trow"><span>Cap at</span><b id="rrv">${S.s.ram} GB</b></div></div>
+   <div class="card"><b>CPU limiter</b><div class="gauge"><i id="gc"></i><u id="gcu"></u></div><small style="color:var(--mut)" id="gct"></small><input type="range" min="10" max="100" step="5" value="${S.s.cpu}" id="rc"><div class="trow"><span>Cap at</span><b id="rcv">${S.s.cpu}%</b></div></div>
+   <div class="card"><b>Network limiter</b><div class="gauge"><i id="gn"></i><u id="gnu"></u></div><small style="color:var(--mut)" id="gnt"></small><input type="range" min="0" max="50" step="1" value="${S.s.limit}" id="rn"><div class="trow"><span>Cap at</span><b id="rnv">${S.s.limit?S.s.limit+' MB/s':'No limit'}</b></div></div></div>
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px"><div class="card"><div class="h2">Process killer <small>sorted by ${U.procSort.toUpperCase()}</small></div><table class="pl"><thead><tr><th>Process</th><th data-s="cpu">CPU ▾</th><th data-s="ram">RAM ▾</th><th></th></tr></thead><tbody id="pbody"></tbody></table></div>
+  <div class="card"><div class="h2">Cleaner <small id="cfree"></small></div><div id="cbody"></div></div></div>`;
+  const lim=(k,u,fmt)=>{$('#r'+k).oninput=e=>{const v=+e.target.value;if(k==='r')S.s.ram=v;if(k==='c')S.s.cpu=v;if(k==='n')S.s.limit=v;$('#r'+k+'v').textContent=k==='r'?v+' GB':k==='c'?v+'%':(v?v+' MB/s':'No limit');save()}};lim('r');lim('c');lim('n');
+  $$('.pl th[data-s]').forEach(t=>t.onclick=()=>{U.procSort=t.dataset.s;drawCtl()});drawClean();liveCtl()}
+function liveCtl(){if(!$('#gr'))return;const p=procs(),ram=p.reduce((a,x)=>a+x[2],0),cpu=p.reduce((a,x)=>a+x[1],0);
+  const set=(k,v,max,cap,txt)=>{$('#g'+k).style.width=Math.min(100,v/max*100)+'%';$('#g'+k+'u').style.left=Math.min(99,cap/max*100)+'%';$('#g'+k+'t').textContent=txt};
+  set('r',ram,32,S.s.ram,`${ram.toFixed(1)} GB in use · cap ${S.s.ram} GB`);set('c',cpu,100,S.s.cpu,`${cpu.toFixed(0)}% in use · cap ${S.s.cpu}%`);set('n',U.speed,50,S.s.limit||50,`${U.speed.toFixed(1)} MB/s · ${S.s.limit?'cap '+S.s.limit+' MB/s':'unlimited'}`);
+  p.sort((a,b)=>b[U.procSort==='cpu'?1:2]-a[U.procSort==='cpu'?1:2]);
+  $('#pbody').innerHTML=p.map(x=>`<tr><td><b>${esc(x[0])}</b>${x[3]?'<span class="chip ok" style="margin-left:6px">game</span>':''}</td><td>${x[1].toFixed(0)}%</td><td>${x[2].toFixed(1)} GB</td><td>${x[3]?`<button class="btn sm red" data-kill="${x[3]}">Kill</button>`:''}</td></tr>`).join('');
+  $$('[data-kill]').forEach(b=>b.onclick=()=>{const n=G(b.dataset.kill).name;stopGame(true);toast(`${esc(n)} was terminated`)})}
+function drawClean(){const rows=U.scanned;$('#cfree').textContent=S.cleaned?'Freed '+S.cleaned.toFixed(1)+' GB so far':'';
+  $('#cbody').innerHTML=U.scanning?`<div class="empty"><span class="spin" style="display:inline-block"></span><br>Scanning caches…</div>`:rows?rows.map((r,i)=>`<label class="cl"><input type="checkbox" data-i="${i}" ${U.cleanSel[i]!==false?'checked':''}><span>${r[0]}</span><span class="sz">${fmtSize(r[1])}</span></label>`).join('')+`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri" id="cdo">Clean selected</button><button class="btn" id="cscan">Rescan</button></div>`:`<div class="empty" style="padding:20px"><b style="font-size:20px">Free up space</b>Find caches, logs and old installers you no longer need.<br><br><button class="btn pri" id="cscan">Scan now</button></div>`;
+  const sc=$('#cscan');if(sc)sc.onclick=()=>{U.scanning=true;U.cleanSel={};drawClean();setTimeout(()=>{U.scanning=false;U.scanned=CLEAN.map(c=>[c[0],c[1]]);drawClean()},1500)};
+  $$('#cbody input').forEach(c=>c.onchange=()=>U.cleanSel[c.dataset.i]=c.checked);
+  const dc=$('#cdo');if(dc)dc.onclick=()=>{const freed=U.scanned.filter((r,i)=>U.cleanSel[i]!==false).reduce((a,r)=>a+r[1],0);S.cleaned+=freed;U.scanned=null;save();toast(`Cleaned ${fmtSize(freed)}`);drawClean();drawList()}}
+
+/* ---------------- SETTINGS ---------------- */
+const ACC=['#f05a22','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308'];
+function drawSet(){$('#set').innerHTML=`<div class="h2">Settings</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="card"><b>Appearance</b><div class="fld" style="margin-top:12px"><label>Accent colour</label><div class="sw" id="acc">${ACC.map(c=>`<button data-c="${c}" class="${S.s.accent===c?'on':''}" style="background:${c}"></button>`).join('')}</div></div><div class="trow"><span>Light theme</span><span class="tg ${S.s.theme==='light'?'on':''}" id="tth"></span></div><div class="fld"><label>Default library view</label><select class="inp" id="dv"><option value="grid">Grid</option><option value="list">List</option></select></div></div>
+  <div class="card"><b>Library</b><div class="trow" style="margin-top:8px"><span>Show hidden games</span><span class="tg ${S.s.showHidden?'on':''}" id="tsh"></span></div><div class="trow"><span>Collections</span><span style="color:var(--mut)">${S.cols.join(', ')||'none'}</span></div><div class="trow"><span>Games in library</span><b>${S.games.length}</b></div></div>
+  <div class="card"><b>Keyboard shortcuts</b>${[['Ctrl K','Search everything'],['Ctrl N','Add a game'],['/','Filter the library'],['Enter','Play / install selected'],['F','Toggle favorite'],['Del','Remove selected game'],['G','Grid / list'],['Esc','Close dialogs']].map(k=>`<div class="trow"><span>${k[1]}</span><kbd style="font:12px ui-monospace,Consolas,monospace;border:1px solid var(--p4);border-radius:5px;padding:1px 7px">${k[0]}</kbd></div>`).join('')}</div>
+  <div class="card"><b>Data</b><p style="color:var(--mut);margin:8px 0 12px;line-height:1.6">Everything is stored in your browser (localStorage). Nothing leaves this page.</p><button class="btn red" id="rst">Reset demo data</button></div></div>`;
+  $('#dv').value=S.s.view;$$('#acc button').forEach(b=>b.onclick=()=>{S.s.accent=b.dataset.c;applyTheme();save();drawSet()});$('#tth').onclick=()=>{S.s.theme=S.s.theme==='light'?'dark':'light';applyTheme();save();drawSet()};$('#dv').onchange=e=>{S.s.view=e.target.value;save()};$('#tsh').onclick=()=>{S.s.showHidden=!S.s.showHidden;save();drawSet()};
+  $('#rst').onclick=()=>confirmDlg('Reset demo data?','This restores the original sample games, collections and settings.','Reset',()=>{localStorage.removeItem(KEY);location.reload()},true)}
+function applyTheme(){const a=S.s.accent;document.documentElement.style.setProperty('--accent',a);document.documentElement.style.setProperty('--accent2',a);document.documentElement.style.setProperty('--glow',a+'6b');document.documentElement.dataset.theme=S.s.theme}
+
+/* ---------------- GLOBAL SEARCH (Ctrl K) ---------------- */
+let pItems=[],pSel=0;
+function openPal(){$('#pal').classList.add('on');$('#pq').value='';$('#pq').focus();runPal()}
+function runPal(){const q=$('#pq').value.trim().toLowerCase(),has=s=>!q||s.toLowerCase().includes(q);pItems=[];
+  S.games.filter(g=>has(g.name)||has(g.genre)).slice(0,8).forEach(g=>pItems.push({grp:'LIBRARY',t:g.name,s:g.installed?'Installed':'Not installed',icon:tile(g,24),run:()=>{go('library');U.sel=g.id;drawLibrary()}}));
+  STORE.filter(s=>has(s.name)||has(s.genre)).slice(0,5).forEach(s=>pItems.push({grp:'STORE',t:s.name,s:s.genre,icon:ic('store'),run:()=>{U.storeQ=s.name;go('store')}}));
+  [['Add a game','Ctrl N',()=>addDlg()],['Open downloads','',()=>go('dl')],['Open Control (limiters, cleaner)','',()=>go('ctl')],['Open settings','',()=>go('set')],['Toggle light / dark theme','',()=>{S.s.theme=S.s.theme==='light'?'dark':'light';applyTheme();save()}],['Pause all downloads','',()=>{S.dls.forEach(d=>d.paused=true);save();go('dl')}]].filter(a=>has(a[0])).forEach(a=>pItems.push({grp:'ACTIONS',t:a[0],s:a[1],icon:ic('bolt'),run:a[2]}));
+  pSel=0;drawPal()}
+function drawPal(){let last='';$('#pres').innerHTML=pItems.map((x,i)=>`${x.grp!==last?`<div class="pg">${last=x.grp}</div>`:''}<div class="pr ${i===pSel?'sel':''}" data-i="${i}">${x.icon}<span>${hl(x.t,$('#pq').value.trim())}</span><small>${esc(x.s)}</small></div>`).join('')||'<div class="empty">No results</div>';$$('#pres .pr').forEach(r=>{r.onclick=()=>pickPal(+r.dataset.i)});const s=$('#pres .sel');s&&s.scrollIntoView({block:'nearest'})}
+function pickPal(i){const x=pItems[i];if(!x)return;$('#pal').classList.remove('on');x.run()}
+$('#gsearch').onclick=openPal;$('#pq').oninput=runPal;$('#pal').onmousedown=e=>{if(e.target.id==='pal')$('#pal').classList.remove('on')};
+$('#pq').onkeydown=e=>{if(e.key==='ArrowDown'){pSel=Math.min(pItems.length-1,pSel+1);drawPal();e.preventDefault()}else if(e.key==='ArrowUp'){pSel=Math.max(0,pSel-1);drawPal();e.preventDefault()}else if(e.key==='Enter')pickPal(pSel)};
+
+/* ---------------- library filter wiring + shortcuts ---------------- */
+$('#lq').oninput=e=>{U.q=e.target.value;U.sel=U.sel&&filtered().some(g=>g.id===U.sel)?U.sel:U.sel;drawLibrary()};$('#lqx').onclick=()=>{$('#lq').value='';U.q='';drawLibrary();$('#lq').focus()};
+$('#lf').onchange=e=>{U.filter=e.target.value;drawLibrary()};$('#ls').onchange=e=>{U.sort=e.target.value;drawLibrary()};
+addEventListener('keydown',e=>{const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName),k=e.key;
+  if((e.ctrlKey||e.metaKey)&&k.toLowerCase()==='k'){e.preventDefault();openPal();return}
+  if((e.ctrlKey||e.metaKey)&&k.toLowerCase()==='n'){e.preventDefault();addDlg();return}
+  if(k==='Escape'){if($('#pal').classList.contains('on'))$('#pal').classList.remove('on');else if($('#ov').classList.contains('on'))closeDlg();else{closeCM();$('#nl').classList.remove('on');$('#fl').classList.remove('on')}return}
+  if(typing||$('#ov').classList.contains('on')||$('#pal').classList.contains('on'))return;
+  if(k==='/'){e.preventDefault();go('library');$('#lq').focus();return}
+  if(U.tab!=='library')return;const g=U.sel&&G(U.sel);
+  if(k==='g'){S.s.view=S.s.view==='grid'?'list':'grid';save();drawMain()}
+  else if(g&&k==='Enter')playOrInstall(g.id);else if(g&&k.toLowerCase()==='f')toggleFav(g.id);else if(g&&k==='Delete')removeGame(g.id);
+  else if(k==='ArrowDown'||k==='ArrowUp'){const l=groups(filtered()).flatMap(x=>x[1]),i=l.findIndex(x=>x.id===U.sel),n=l[Math.max(0,Math.min(l.length-1,i+(k==='ArrowDown'?1:-1)))];if(n){U.sel=n.id;drawLibrary();e.preventDefault()}}});
+
+const LOG=[];
+/* ---------------- boot ---------------- */
+applyTheme();drawFriends();drawNav();go('library');
+
+/* ---------------- TEST BRIDGE ----------------
+   Lets a parent page (the Live Demo) drive this real app through window.postMessage:
+   locator resolution like Playwright (getByRole/getByText/getByLabel/getByPlaceholder/getByTestId/locator + first/last/nth/filter),
+   actions (click, fill, select, check, press) and auto-retrying expectations. */
+(function(){
+  const norm=s=>(s||'').replace(/\s+/g,' ').trim();
+  const rootEl=()=>document.getElementById('win');
+  const allEls=(r=rootEl())=>[...r.querySelectorAll('*')];
+  const isVis=el=>{const r=el.getBoundingClientRect();if(!r.width||!r.height)return false;const cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none'&&!el.closest('[hidden]')&&!(el.closest('#ov:not(.on),#cm:not(.on),#pal:not(.on),#closed:not(.on),#nl:not(.on),#fl:not(.on)'))};
+  const labelOf=el=>{if(el.getAttribute('aria-label'))return el.getAttribute('aria-label');if(el.id){const l=document.querySelector('label[for="'+el.id+'"]');if(l)return norm(l.textContent)}const w=el.closest('label');if(w)return norm(w.textContent);return null};
+  const roleOf=el=>{const t=el.tagName.toLowerCase(),ty=(el.getAttribute('type')||'').toLowerCase(),ex=el.getAttribute('role');if(ex)return ex;
+    if(t==='button'||(t==='input'&&['button','submit','reset'].includes(ty)))return'button';if(t==='a'&&el.hasAttribute('href'))return'link';
+    if(t==='input'&&ty==='checkbox')return'checkbox';if(t==='input'&&ty==='radio')return'radio';if(t==='input'&&ty==='range')return'slider';
+    if(t==='input'||t==='textarea')return'textbox';if(t==='select')return'combobox';if(/^h[1-6]$/.test(t))return'heading';
+    if(t==='table')return'table';if(t==='tr')return'row';if(t==='td')return'cell';if(t==='th')return'columnheader';if(t==='img'&&el.hasAttribute('alt'))return'img';return null};
+  const nameOf=el=>{const l=labelOf(el);if(l)return l;if(el.tagName==='IMG')return el.getAttribute('alt')||'';
+    const t=norm(el.textContent);if(t)return t;return el.getAttribute('title')||el.getAttribute('placeholder')||''};
+  const own=el=>norm([...el.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(' '));
+  const mt=(hay,needle,exact)=>exact?hay===needle:hay.toLowerCase().includes(needle.toLowerCase());
+  const parseArgs=s=>{const m=s.match(/^\s*(['"`])((?:\\.|(?!\1).)*)\1\s*(?:,\s*(\{[\s\S]*\}))?\s*$/);if(!m)return{first:s.trim().replace(/^['"`]|['"`]$/g,''),opts:{}};
+    const o=m[3]||'',opts={};let r;if(r=o.match(/name\s*:\s*(['"`])((?:\\.|(?!\1).)*)\1/))opts.name=r[2];if(r=o.match(/hasText\s*:\s*(['"`])((?:\\.|(?!\1).)*)\1/))opts.hasText=r[2];if(/exact\s*:\s*true/.test(o))opts.exact=true;return{first:m[2],opts}};
+  function evalExpr(src){
+    let s=src.trim().replace(/;$/,'').replace(/^(await\s+)?page\s*\.?/,'').replace(/^\./,'');if(!s)throw new Error('Empty locator');
+    const re=/\.?\s*(\w+)\(((?:[^()]|\([^()]*\))*)\)/y;let cur=[rootEl()],pos=0;
+    while(pos<s.length){re.lastIndex=pos;const m=re.exec(s);if(!m)throw new Error('Cannot parse locator near: '+s.slice(pos,pos+30));pos=re.lastIndex;
+      const fn=m[1],{first:a,opts}=parseArgs(m[2]),scope=cur.flatMap(el=>el===rootEl()?allEls():[...el.querySelectorAll('*')]);let res;
+      switch(fn){
+        case'getByRole':res=scope.filter(e=>roleOf(e)===a&&isVis(e)&&(opts.name==null||mt(nameOf(e),opts.name,opts.exact)));break;
+        case'getByText':res=scope.filter(e=>{const t=own(e);return t&&mt(t,a,opts.exact)});break;
+        case'getByLabel':res=scope.filter(e=>{const l=labelOf(e);return l&&e.tagName!=='LABEL'&&mt(l,a,opts.exact)});break;
+        case'getByPlaceholder':res=scope.filter(e=>e.getAttribute('placeholder')&&mt(e.getAttribute('placeholder'),a,opts.exact));break;
+        case'getByTestId':res=scope.filter(e=>e.getAttribute('data-testid')===a);break;
+        case'getByAltText':res=scope.filter(e=>e.getAttribute('alt')&&mt(e.getAttribute('alt'),a,opts.exact));break;
+        case'getByTitle':res=scope.filter(e=>e.getAttribute('title')&&mt(e.getAttribute('title'),a,opts.exact));break;
+        case'locator':try{res=cur.flatMap(el=>[...el.querySelectorAll(a)])}catch(e){throw new Error('Invalid CSS selector')}break;
+        case'first':res=cur.slice(0,1);break;case'last':res=cur.slice(-1);break;case'nth':res=cur.slice(+a,+a+1);break;
+        case'filter':res=cur.filter(e=>opts.hasText==null||mt(norm(e.textContent),opts.hasText,false));break;
+        default:throw new Error('Unsupported: .'+fn+'()')}
+      cur=[...new Set(res)]}
+    return cur}
+  const rectOf=el=>{const r=el.getBoundingClientRect();return{x:r.left,y:r.top,w:r.width,h:r.height}};
+  const info=el=>({tag:el.tagName.toLowerCase(),role:roleOf(el),name:nameOf(el).slice(0,60),text:norm(el.textContent).slice(0,60),vis:isVis(el),rect:rectOf(el)});
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function one(expr,needVisible){const m=evalExpr(expr),v=needVisible?m.filter(isVis):m;if(v.length===0)throw new Error('locator resolved to 0 '+(needVisible?'visible ':'')+'elements');if(v.length>1)throw new Error('strict mode violation: locator resolved to '+v.length+' elements');return v[0]}
+  const tryExpect=(expr,kind,val,not)=>{let m;try{m=evalExpr(expr)}catch(e){return{ok:false,actual:e.message}}let ok,act;
+    if(kind==='toHaveCount'){act=m.length;ok=m.length===+val}
+    else{if(kind==='toBeHidden'){act=m.some(isVis)?'visible':'hidden';ok=!m.some(isVis)}
+      else if(m.length!==1){act=m.length+' elements';ok=false}
+      else{const el=m[0];switch(kind){case'toBeVisible':ok=isVis(el);act=ok?'visible':'hidden';break;case'toBeEnabled':ok=!el.disabled;act=ok?'enabled':'disabled';break;case'toBeDisabled':ok=!!el.disabled;act=ok?'disabled':'enabled';break;case'toBeChecked':ok=!!el.checked;act=ok?'checked':'unchecked';break;
+        case'toHaveText':act=norm(el.textContent);ok=act===val;break;case'toContainText':act=norm(el.textContent);ok=act.toLowerCase().includes(String(val).toLowerCase());break;case'toHaveValue':act=el.value;ok=act===val;break;default:ok=false;act='unknown matcher'}}}
+    return{ok:not?!ok:ok,actual:act}};
+  const press=key=>{const parts=key.split('+'),k=parts.pop(),mods={ctrlKey:parts.includes('Control')||parts.includes('Ctrl'),shiftKey:parts.includes('Shift'),altKey:parts.includes('Alt'),metaKey:parts.includes('Meta')};
+    const tgt=document.activeElement&&document.activeElement!==document.body?document.activeElement:document.body;tgt.dispatchEvent(new KeyboardEvent('keydown',{key:k.length===1?k.toLowerCase():k,bubbles:true,cancelable:true,...mods}))};
+  async function handle(m){
+    try{switch(m.op){
+      case'rect':{const els=evalExpr(m.expr);return{ok:true,n:els.length,matches:els.slice(0,40).map(info)}}
+      case'click':{const el=one(m.expr,true);el.scrollIntoView({block:'nearest'});const r=el.getBoundingClientRect();['mousedown','mouseup'].forEach(t=>el.dispatchEvent(new MouseEvent(t,{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2})));el.click();return{ok:true}}
+      case'dblclick':{const el=one(m.expr,true);el.click();el.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}));return{ok:true}}
+      case'contextmenu':{const el=one(m.expr,true),r=el.getBoundingClientRect();el.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));return{ok:true}}
+      case'fill':{const el=one(m.expr,true);el.focus();el.value=m.value;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));return{ok:true}}
+      case'select':{const el=one(m.expr,true);el.value=m.value;el.dispatchEvent(new Event('change',{bubbles:true}));return{ok:true}}
+      case'check':{const el=one(m.expr,true);if(!el.checked)el.click();return{ok:true}}
+      case'press':press(m.key);return{ok:true};
+      case'expect':{const t0=performance.now(),to=m.timeout||5000;let r;do{r=tryExpect(m.expr,m.kind,m.value,m.not);if(r.ok)break;await sleep(100)}while(performance.now()-t0<to);return{ok:r.ok,actual:r.actual,elapsed:performance.now()-t0}}
+      case'drain':return{ok:true,events:LOG.splice(0)};
+      case'reset':localStorage.removeItem(KEY);location.reload();return null;
+      default:return{ok:false,err:'unknown op '+m.op}}}
+    catch(e){return{ok:false,err:e.message}}}
+  addEventListener('message',async e=>{const m=e.data;if(!m||m.gd!=='cmd')return;const r=await handle(m);if(r&&e.source)e.source.postMessage({gd:'res',id:m.id,...r},'*')});
+  if(parent!==window)addEventListener('load',()=>parent.postMessage({gd:'ready'},'*'));
+})();
+
+setInterval(()=>{if(S.games.some(g=>g.update&&g.installed&&!dlOf(g.id)&&false))return},1000);
+</script>
+</body>
+</html>

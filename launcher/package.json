@@ -1,0 +1,14 @@
+{
+  "name": "gamedeck",
+  "version": "1.0.0",
+  "description": "GameDeck: sample Electron game launcher used by the Playwright study book",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "electron": "latest"
+  }
+}

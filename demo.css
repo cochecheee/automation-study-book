@@ -115,3 +115,18 @@ body[data-app=book] #book{display:block}
 .mt .toast{position:absolute;left:18px;right:18px;bottom:20px;padding:12px 14px;border-radius:12px;background:#111827;color:#fff;font-weight:600;text-align:center}
 .mt .toast.bad{background:#b91c1c}.mt .toast.good{background:#15803d}
 .mt .blank{flex:1;display:grid;place-items:center;color:#64748b}
+
+/* ===== real app frame + playground ===== */
+.dapp{width:1290px;border:1px solid var(--line2);border-radius:12px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5);background:#000}
+.dapp .dviewport{width:1280px;height:720px;position:relative}
+#dif{width:1280px;height:720px;border:0;display:block;pointer-events:none;background:#0a0a0a}
+.dhl.below span{bottom:auto;top:100%;margin:3px 0 0}
+.pgbox{padding:14px 16px}.pgl{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--mut);margin-bottom:6px}.pgl small{font-weight:400;letter-spacing:0}
+.pgbox .inp{font:13px ui-monospace,Consolas,monospace;height:38px}
+.pgcode{margin:10px 0;padding:10px 12px;border-radius:10px;background:#050816;color:#dbe3ff;font:12.5px/1.55 var(--font);word-break:break-all;min-height:40px}
+.pgp{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pgp .btn{font:11.5px ui-monospace,Consolas,monospace;height:auto;padding:5px 8px;white-space:normal;text-align:left}
+body.pg #dBottom .dctl{display:none}
+body.pg #dRight .ph .seg{display:none}
+.pgbox .inp{width:100%;padding:0 12px;border-radius:8px;background:var(--panel2);color:var(--text);border:1px solid var(--line2);outline:none}
+.pgbox .inp:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,214,255,.2)}
+.pgp .btn{text-transform:none;letter-spacing:0}
