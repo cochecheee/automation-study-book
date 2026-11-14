@@ -189,6 +189,7 @@ section.doc h3::before{content:counter(h3c);flex:none;width:32px;height:32px;bor
 .sources{margin:26px 0 8px;padding:14px 18px;border-radius:14px;background:var(--panel2);border:1px solid var(--line)}
 .sources h4{margin:0 0 6px}.sources ul{margin:0;padding-left:20px;font-size:14px}.sources li{margin:3px 0}
 .matrix td:first-child{font-weight:700;white-space:nowrap}
+body.embed #topbar .logo,body.embed #topbar a[href="index.html"],body.embed #themeBtn{display:none}
 /* labs */
 .lab{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel2);margin:16px 0}
 .lab label{font-size:14px;display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0}
@@ -18241,6 +18242,8 @@ const root=document.documentElement;
 function setTheme(t){root.dataset.theme=t;$('#themeBtn').textContent=t==='dark'?'☀️':'🌙';store.set('pw-theme',t)}
 setTheme(store.get('pw-theme',matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
 $('#themeBtn').onclick=()=>setTheme(root.dataset.theme==='dark'?'light':'dark');
+if(/[?&]embed/.test(location.search))document.body.classList.add('embed');
+addEventListener('message',e=>{if(e.data&&e.data.pwTheme)setTheme(e.data.pwTheme)});
 $('#burger').onclick=()=>document.body.classList.toggle('nav-open');
 
 /* ---------- syntax highlight ---------- */

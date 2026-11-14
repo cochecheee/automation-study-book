@@ -40,7 +40,7 @@ function hl(code) {
 let cur = null;                  // current scenario
 let st = {step: -1, k: 0};       // step index (-1 overview) and revealed messages inside the step
 let view = 'net', playing = false, runTok = 0, animTok = 0, granular = false;
-let lang = store.get('pwx-lang', 'ts'), theme = store.get('pwx-theme', 'dark');
+let lang = store.get('pwx-lang', 'ts'), theme = store.get('pw-theme', 'dark');
 let platFilter = 'all', layerSel = 0, inspIdx = -1, speed = 1;
 let camera = [0, 0, 1000, 560], camTok = 0;
 
@@ -225,7 +225,7 @@ function drawRight() {
     <p class="rtext">${esc(o.text || '')}</p>
     <div class="kv">${(o.facts || []).map(f => `<div class="k">${esc(f[0])}</div><div>${esc(f[1])}</div>`).join('')}</div>
     ${o.caveat ? `<div class="callout">${esc(o.caveat)}</div>` : ''}
-    <p style="margin-top:14px"><button class="btn" id="bStart">▶ Start the walkthrough</button> ${o.guide ? `<a class="btn" href="playwright-deep-dive-en.html#${esc(o.guide)}" target="_blank">📖 Read the deep dive</a>` : ''}</p>`;
+    <p style="margin-top:14px"><button class="btn" id="bStart">▶ Start the walkthrough</button> ${o.guide ? `<a class="btn" href="#" data-book="${esc(o.guide)}">📖 Read the deep dive</a>` : ''}</p>`;
     $('#bStart').onclick = () => togglePlay();
     return;
   }
@@ -237,7 +237,7 @@ function drawRight() {
     ${m && m.step === st.step ? `<div class="msgcard" style="border-left-color:${col(m.proto)}"><span class="tag" style="background:${col(m.proto)}">${esc(m.proto)}</span><b>${esc(nodeOf(m.from).label)} → ${esc(nodeOf(m.to).label)}</b><small>${esc(m.info)}</small><small>MESSAGE ${m.n} OF ${cur.messages.length}${m.size ? ' · ' + esc(m.size) : ''}</small></div>` : ''}
     <div class="kv">${(s.facts || []).map(f => `<div class="k">${esc(f[0])}</div><div>${esc(f[1])}</div>`).join('')}</div>
     ${codeHtml}${s.note ? `<div class="callout">${esc(s.note)}</div>` : ''}
-    ${(s.guide || (cur.overview && cur.overview.guide)) ? `<p><a class="btn" href="playwright-deep-dive-en.html#${esc(s.guide || cur.overview.guide)}" target="_blank">📖 Deep dive</a></p>` : ''}`;
+    ${(s.guide || (cur.overview && cur.overview.guide)) ? `<p><a class="btn" href="#" data-book="${esc(s.guide || cur.overview.guide)}">📖 Deep dive</a></p>` : ''}`;
   $$('.codehead button[data-l]', body).forEach(b => b.onclick = () => setLang(b.dataset.l));
   const cp = $('#cpy'); if (cp) cp.onclick = () => navigator.clipboard.writeText(c || '').then(() => { cp.textContent = '✓'; setTimeout(() => cp.textContent = 'COPY', 1200); });
 }
@@ -249,7 +249,7 @@ function renderAll(cam = true) {
   if (view === 'seq') drawSeq();
   if (cam) moveCam();
   $('#bPlay').textContent = playing ? '❚❚ PAUSE' : '▶ PLAY';
-  history.replaceState(null, '', '#' + cur.id + (st.step >= 0 ? '/' + (st.step + 1) : ''));
+  if (document.body.dataset.app === 'explorer') history.replaceState(null, '', '#' + cur.id + (st.step >= 0 ? '/' + (st.step + 1) : ''));
 }
 function selectScenario(id, step) {
   const sc = SC.find(s => s.id === id); if (!sc) return;
@@ -291,8 +291,8 @@ function stepNext() { if (!cur) return; stopPlay();
 function stepPrev() { if (!cur) return; stopPlay(); gotoStep(st.step - 1, true); }
 
 /* ---------- misc UI ---------- */
-function setLang(l) { lang = l; store.set('pwx-lang', l); $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === l)); drawRight(); }
-function setTheme(t) { theme = t; document.documentElement.dataset.theme = t; $('#bTheme').textContent = t === 'dark' ? '☾' : '☀'; store.set('pwx-theme', t); }
+function setLang(l) { lang = l; (window.__langL || []).forEach(f => f(l)); store.set('pwx-lang', l); $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === l)); drawRight(); }
+function setTheme(t) { theme = t; document.documentElement.dataset.theme = t; $('#bTheme').textContent = t === 'dark' ? '☾' : '☀'; store.set('pw-theme', t); }
 function setView(v) { view = v; document.body.classList.toggle('seqmode', v === 'seq'); $('#vNet').classList.toggle('on', v === 'net'); $('#vSeq').classList.toggle('on', v === 'seq'); if (cur) { if (v === 'seq') drawSeq(); moveCam(false); } }
 function setLayer(n) { layerSel = layerSel === n ? 0 : n; $$('#layers button').forEach(b => b.classList.toggle('on', +b.dataset.n === layerSel)); $('#layerName').textContent = layerSel ? LAYERS[layerSel - 1] : 'All'; paintHot(); }
 function toggleBody(c, btn) { document.body.classList.toggle(c); $(btn).classList.toggle('on', document.body.classList.contains(c)); setTimeout(() => moveCam(false), 50); }
@@ -329,7 +329,8 @@ function init() {
   $('#bKeys').onclick = () => openModal('#mKeys'); $('#searchBtn').onclick = () => { openModal('#mSearch'); runSearch(); };
   $('#vNet').onclick = () => setView('net'); $('#vSeq').onclick = () => setView('seq');
   $('#bPlay').onclick = togglePlay; $('#bStep').onclick = stepNext; $('#bPrev').onclick = stepPrev; $('#bReset').onclick = () => gotoStep(-1);
-  $('#bBack').onclick = () => gotoStep(-1); $('#speed').onchange = e => speed = +e.target.value;
+  $('#bBack').onclick = () => gotoStep(-1);
+  $('#rbody').addEventListener('click', e => { const a = e.target.closest('[data-book]'); if (a) { e.preventDefault(); window.openBook && window.openBook(a.dataset.book); } }); $('#speed').onchange = e => speed = +e.target.value;
   $$('[data-close]').forEach(b => b.onclick = closeModals); $$('.modal').forEach(m => m.onclick = e => { if (e.target === m) closeModals(); });
   $('#q').oninput = runSearch;
   $('#shList').innerHTML = [['PLAYBACK'], ['Space', 'Play / pause'], ['← / →', 'Previous / next step'], ['S', 'Toggle one-message-at-a-time stepping'], ['1 – 9', 'Go to step 1–9'], ['[ / ]', 'Slower / faster'], ['Esc', 'Close panel / back to overview'],
@@ -337,6 +338,7 @@ function init() {
     ['FIND'], ['Ctrl K  /  /', 'Search'], ['N / P', 'Next / previous scenario'], ['?', 'This help'], ['INSPECTOR'], ['← / →', 'Previous / next message (when open)']]
     .map(r => r.length === 1 ? `<h4>${r[0]}</h4>` : `<div><span>${r[1]}</span><kbd>${r[0]}</kbd></div>`).join('');
   addEventListener('keydown', e => {
+    if (document.body.dataset.app && document.body.dataset.app !== 'explorer') return;
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openModal('#mSearch'); runSearch(); return; }
     if ($('#mSearch').classList.contains('on')) {
@@ -368,6 +370,6 @@ function init() {
   const h = location.hash.slice(1).split('/'); const first = SC.find(s => s.id === h[0]) || SC[0];
   selectScenario(first.id, h[1] ? +h[1] - 1 : null);
 }
-window.EXPLORER = {get cur() { return cur }, get st() { return st }, selectScenario, gotoStep, togglePlay, setView, scenarios: SC};
+window.EXPLORER = {hl, lang: () => lang, setLang, onLang: f => (window.__langL = window.__langL || []).push(f), get cur() { return cur }, get st() { return st }, selectScenario, gotoStep, togglePlay, setView, scenarios: SC};
 init();
 })();

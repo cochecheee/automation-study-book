@@ -5,25 +5,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Playwright Explorer · See how test automation really works</title>
 <link rel="stylesheet" href="explorer.css">
+<link rel="stylesheet" href="demo.css">
 </head>
-<body>
+<body data-app="explorer">
+<script>(function(){var h=location.hash.slice(1).split("/")[0];document.body.dataset.app=(h==="demo"||h==="book")?h:"explorer"})()</script>
 <header id="top">
   <div class="brand">
     <div class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9z"/><path d="M12 11l8-4.5M12 11L4 6.5M12 11v9"/></svg></div>
     <div><h1>PLAYWRIGHT <i>EXPLORER</i></h1><small>SEE HOW TEST AUTOMATION REALLY WORKS</small></div>
   </div>
-  <div class="group"><span>Layer <b id="layerName">All</b></span><div class="layers" id="layers"></div></div>
-  <button id="searchBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search scenarios and steps<kbd>Ctrl K</kbd></button>
-  <button class="ibtn" id="bList" title="Scenario list (L)">☰</button>
-  <button class="ibtn" id="bDiag" title="Diagram only (D)">▭</button>
+  <nav class="apps" id="apps">
+    <button data-app="explorer" class="on">🧭 Explorer</button>
+    <button data-app="demo">🎬 Live Demo</button>
+    <button data-app="book">📖 Study Book</button>
+  </nav>
+  <div class="group xo"><span>Layer <b id="layerName">All</b></span><div class="layers" id="layers"></div></div>
+  <button id="searchBtn" class="xo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search<kbd>Ctrl K</kbd></button>
+  <button class="ibtn xo" id="bList" title="Scenario list (L)">☰</button>
+  <button class="ibtn xo" id="bDiag" title="Diagram only (D)">▭</button>
   <button class="ibtn" id="bFull" title="Fullscreen (F)">⛶</button>
-  <button class="ibtn" id="bKeys" title="Keyboard shortcuts (?)">⌨</button>
-  <div class="group"><span>Code language</span><div class="seg" id="langSeg"><button data-l="ts" class="on">TypeScript</button><button data-l="java">Java</button></div></div>
+  <button class="ibtn xo" id="bKeys" title="Keyboard shortcuts (?)">⌨</button>
+  <div class="group xd"><span>Code language</span><div class="seg" id="langSeg"><button data-l="ts" class="on">TypeScript</button><button data-l="java">Java</button></div></div>
   <div class="spacer"></div>
-  <a class="btn" href="playwright-deep-dive-en.html" id="bookLink">📖 Study Book</a>
   <button class="ibtn" id="bTheme" title="Light / dark (T)">☾</button>
 </header>
 
+<!-- ============ APP 1: EXPLORER ============ -->
 <div id="grid">
   <aside class="panel" id="left">
     <div class="ph"><h2>Scenarios</h2></div>
@@ -58,6 +65,38 @@
   </section>
 </div>
 
+<!-- ============ APP 2: LIVE DEMO ============ -->
+<div id="demo">
+  <aside class="panel" id="dLeft">
+    <div class="ph"><h2>Live demos</h2></div>
+    <div id="dList"></div>
+  </aside>
+
+  <section class="panel" id="dCenter">
+    <div class="dhead"><b id="dTitle"></b><span id="dChips"></span></div>
+    <div id="dStage"><div id="dFit"></div></div>
+  </section>
+
+  <aside class="panel" id="dRight">
+    <div class="ph"><h2>Test script</h2>
+      <div class="seg" id="dLangSeg"><button data-l="ts" class="on">TS</button><button data-l="java">JAVA</button></div></div>
+    <div class="dcode" id="dCode"></div>
+    <div id="dExplain"></div>
+  </aside>
+
+  <section class="panel" id="dBottom">
+    <div class="half"><div class="hh"><h2>Actions</h2>
+      <div class="dctl">
+        <select id="dSpeed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+        <button class="btn" id="dPrev">‹</button><button class="btn play" id="dPlay" style="background:var(--accent);border-color:var(--accent);color:#fff;min-width:100px">▶ PLAY</button><button class="btn" id="dNext">STEP</button><button class="btn" id="dReset">↻ RESET</button>
+      </div></div><div class="tw" id="aLog"></div></div>
+    <div class="half" style="flex:.8"><div class="hh"><h2>Network</h2><span style="color:var(--muted);font-size:12px">What the page requested</span></div><div class="tw" id="nLog"></div></div>
+  </section>
+</div>
+
+<!-- ============ APP 3: STUDY BOOK ============ -->
+<iframe id="book" title="Study Book"></iframe>
+
 <div class="modal" id="mSearch"><div class="mbox"><h3>SEARCH <button class="btn" data-close>Esc</button></h3><input id="q" placeholder="Try: auto-wait, storageState, adb, electron, appium…" autocomplete="off"><div class="res" id="res"></div></div></div>
 <div class="modal" id="mKeys"><div class="mbox"><h3>KEYBOARD SHORTCUTS <button class="btn" data-close>Esc</button></h3><div class="sh" id="shList"></div></div></div>
 
@@ -65,5 +104,7 @@
 <script src="scenarios/mobile.js"></script>
 <script src="scenarios/desktop.js"></script>
 <script src="explorer.js"></script>
+<script src="demo.js"></script>
+<script src="shell.js"></script>
 </body>
 </html>
