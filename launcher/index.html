@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>GameDeck · desktop game launcher (sample)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=Inter:wght@400;500;600&family=League+Gothic&display=swap" rel="stylesheet">
@@ -196,6 +196,14 @@ body.fluid #fl{width:min(270px,80vw)}
 body.fluid .toast{min-width:0;max-width:calc(100vw - 36px)}
 body.fluid table.lt,body.fluid .pl{display:block;overflow-x:auto}
 body.fluid .bar{flex-wrap:wrap}
+body.fluid .scr [style*="grid-template-columns"]{grid-template-columns:minmax(0,1fr)!important}
+body.fluid .trow,body.fluid .li{flex-wrap:wrap}
+body.fluid #tb{padding-top:calc(8px + env(safe-area-inset-top));padding-left:calc(10px + env(safe-area-inset-left));padding-right:calc(10px + env(safe-area-inset-right))}
+body.fluid .inp,body.fluid select.inp,body.fluid .pbox input{font-size:16px}
+body.fluid #toasts{bottom:calc(16px + env(safe-area-inset-bottom))}body.fluid #friends{bottom:calc(14px + env(safe-area-inset-bottom))}
+body.fluid .scr,body.fluid .lib{padding-bottom:env(safe-area-inset-bottom)}
+body.fluid *{min-width:0}body.fluid .tile,body.fluid .btn,body.fluid .ib{min-width:auto}
+body.fluid{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </style>
 </head>
 <body>
