@@ -6,9 +6,10 @@
 <title>Playwright Explorer · See how test automation really works</title>
 <link rel="stylesheet" href="explorer.css">
 <link rel="stylesheet" href="demo.css">
+<link rel="stylesheet" href="foundations.css">
 </head>
 <body data-app="explorer">
-<script>(function(){var h=location.hash.slice(1).split("/")[0];document.body.dataset.app=(h==="demo"||h==="book")?h:"explorer"})()</script>
+<script>(function(){var h=location.hash.slice(1).split("/")[0];document.body.dataset.app=(h==="demo"||h==="book"||h==="found")?h:"explorer"})()</script>
 <header id="top">
   <div class="brand">
     <div class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9z"/><path d="M12 11l8-4.5M12 11L4 6.5M12 11v9"/></svg></div>
@@ -17,6 +18,7 @@
   <nav class="apps" id="apps">
     <button data-app="explorer" class="on"><span class="em">🧭</span> Explorer</button>
     <button data-app="demo"><span class="em">🎬</span> Live Demo</button>
+    <button data-app="found"><span class="em">🏛</span> Foundations</button>
     <button data-app="book"><span class="em">📖</span> Study Book</button>
   </nav>
   <div class="group xo"><span>Layer <b id="layerName">All</b></span><div class="layers" id="layers"></div></div>
@@ -94,7 +96,10 @@
   </section>
 </div>
 
-<!-- ============ APP 3: STUDY BOOK ============ -->
+<!-- ============ APP 3: FOUNDATIONS ============ -->
+<div id="found"><nav class="panel" id="fNav" aria-label="Chapters"></nav><div id="fMain"></div></div>
+
+<!-- ============ APP 4: STUDY BOOK ============ -->
 <iframe id="book" title="Study Book"></iframe>
 
 <div class="modal" id="mSearch"><div class="mbox"><h3>SEARCH <button class="btn" data-close>Esc</button></h3><input id="q" placeholder="Try: auto-wait, storageState, adb, electron, appium…" autocomplete="off"><div class="res" id="res"></div></div></div>
@@ -105,6 +110,9 @@
 <script src="scenarios/desktop.js"></script>
 <script src="explorer.js"></script>
 <script src="demo.js"></script>
+<script src="foundations-src.js"></script>
+<script src="foundations-data.js"></script>
+<script src="foundations.js"></script>
 <script src="shell.js"></script>
 </body>
 </html>

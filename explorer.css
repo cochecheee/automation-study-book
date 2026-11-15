@@ -258,3 +258,4 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
  .apps{overflow:hidden}.apps button{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
 }
 @media(max-width:480px){.apps .em{display:none}.apps button{font-size:12px;letter-spacing:0}}
+@media(max-width:820px){.apps button{font-size:11px}}

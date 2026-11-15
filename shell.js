@@ -10,13 +10,15 @@ $('#book').addEventListener('load', pushTheme);
 new MutationObserver(pushTheme).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
 
 function setApp(app, arg, at) {
-  if (!['explorer', 'demo', 'book'].includes(app)) app = 'explorer';
+  if (!['explorer', 'demo', 'found', 'book'].includes(app)) app = 'explorer';
   document.body.dataset.app = app;
   $$('#apps button').forEach(b => b.classList.toggle('on', b.dataset.app === app));
   if (app === 'book') {
     const src = BOOK + '?embed=1' + (arg ? '#' + arg : '');
     if (src !== bookSrc) { bookSrc = src; $('#book').src = src; }
     history.replaceState(null, '', '#book' + (arg ? '/' + arg : ''));
+  } else if (app === 'found') {
+    if (window.FOUNDATIONS) setTimeout(() => arg ? window.FOUNDATIONS.go(arg) : history.replaceState(null, '', '#found'), 30);
   } else if (app === 'demo') {
     if (window.DEMO) { if (arg) window.DEMO.open(arg, at); window.DEMO.fit(); setTimeout(window.DEMO.fit, 60); }
     if (!arg && window.DEMO) history.replaceState(null, '', '#demo');
@@ -35,6 +37,7 @@ $$('#apps button').forEach(b => b.onclick = () => setApp(b.dataset.app));
 function route() {
   const h = location.hash.slice(1).split('/');
   if (h[0] === 'book') setApp('book', h[1] || '');
+  else if (h[0] === 'found') setApp('found', h[1] || '');
   else if (h[0] === 'demo') setApp('demo', h[1] || null, h[2] ? +h[2] - 1 : null);
   else document.body.dataset.app = 'explorer';
 }
