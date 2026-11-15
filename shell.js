@@ -38,5 +38,7 @@ function route() {
   else if (h[0] === 'demo') setApp('demo', h[1] || null, h[2] ? +h[2] - 1 : null);
   else document.body.dataset.app = 'explorer';
 }
+function setHH() { document.documentElement.style.setProperty('--hh', $('#top').offsetHeight + 'px'); }
+addEventListener('resize', setHH); setHH(); setTimeout(setHH, 200);
 route();
 })();

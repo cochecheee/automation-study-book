@@ -217,6 +217,13 @@ body.embed #topbar .logo,body.embed #topbar a[href="index.html"],body.embed #the
 @media(max-width:1180px){#toc{display:none}}
 @media(max-width:900px){#sidebar{transform:translateX(-100%);transition:.25s}body.nav-open #sidebar{transform:none}main{margin-left:0;padding:80px 12px}#burger{display:block}.cmp{grid-template-columns:1fr}section.doc{padding:20px 16px}}
 @media print{#topbar,#sidebar,#toc,.pager,.markdone,#progress{display:none}main{margin:0;padding:0}section.doc{display:block!important;box-shadow:none;border:0;page-break-after:always}}
+/* themed scrollbars + small-phone tweaks */
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--muted);background-clip:content-box;border:2px solid transparent}
+::-webkit-scrollbar-corner{background:transparent}
+@media(max-width:600px){#topbar{gap:6px;padding:0 8px}main{padding:72px 8px}section.doc{padding:16px 12px}pre{max-width:100%;overflow-x:auto}table{display:block;max-width:100%;overflow-x:auto}img,svg{max-width:100%;height:auto}h1{font-size:1.5em}}
 </style>
 </head>
 <body>

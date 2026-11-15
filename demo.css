@@ -130,3 +130,17 @@ body.pg #dRight .ph .seg{display:none}
 .pgbox .inp{width:100%;padding:0 12px;border-radius:8px;background:var(--panel2);color:var(--text);border:1px solid var(--line2);outline:none}
 .pgbox .inp:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,214,255,.2)}
 .pgp .btn{text-transform:none;letter-spacing:0}
+
+/* ===== Mobile / small screens ===== */
+@media(max-width:820px){
+ #demo{padding:10px;gap:10px}
+ #dLeft{order:1;max-height:34vh}#dCenter{order:2;height:auto}#dBottom{order:3}#dRight{order:4}
+ #dStage{flex:none}
+ #dBottom{flex-direction:column;max-height:none}#dBottom .half{border-right:0;border-bottom:1px solid var(--line);max-height:36vh}
+ #dBottom .hh{flex-wrap:wrap;gap:8px}.dctl{width:100%;justify-content:space-between}
+ #dPlay{min-width:0!important;flex:1}
+ .dcode{max-height:42vh;font-size:12px}
+ #dExplain{max-height:none}
+ .dhead{padding:8px 10px}.dhead b{font-size:13px}
+ .pgbox{padding:12px}
+}

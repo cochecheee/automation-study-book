@@ -160,6 +160,42 @@ body.embed #hint{display:none}
 body.electron #tb{-webkit-app-region:drag}body.electron #tb button,body.electron #tb input,body.electron .usr{-webkit-app-region:no-drag}
 #hint{position:fixed;right:10px;bottom:6px;font:11.5px ui-monospace,Consolas,monospace;color:var(--mut);background:rgba(10,10,10,.8);border:1px solid var(--p3);padding:3px 10px;border-radius:999px;z-index:400;opacity:.8}
 .spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+
+/* themed scrollbars */
+*{scrollbar-width:thin;scrollbar-color:var(--p4) transparent}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--p4);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--mut);background-clip:content-box;border:2px solid transparent}
+::-webkit-scrollbar-corner{background:transparent}
+
+/* ===== fluid layout on phones / small windows (browser only; Electron and the embed keep the 1280x720 window) ===== */
+body.fluid{overflow:hidden}
+body.fluid #stage{display:block}
+body.fluid #win{width:100vw;height:100vh;height:100dvh;border-radius:0;transform:none!important;box-shadow:none;grid-template-rows:auto minmax(0,1fr)}
+body.fluid #tb{flex-wrap:wrap;gap:6px 8px;padding:8px 10px}
+body.fluid .brand{font-size:20px}
+body.fluid #nav{order:5;width:100%;overflow-x:auto;gap:0;flex:none}body.fluid .nt{padding:8px 11px;white-space:nowrap;flex:none}body.fluid .nt.on::after{bottom:0}
+body.fluid #gsearch{margin:0 0 0 auto;flex:none;min-width:0;width:34px;height:34px;padding:0;justify-content:center;font-size:0;gap:0}body.fluid #gsearch kbd{display:none}
+body.fluid .usr b,body.fluid .usr .st,body.fluid .wc,body.fluid #hint{display:none}
+body.fluid .usr{padding:3px}
+body.fluid .np{order:6}
+body.fluid .scr{padding:14px 12px 30px}
+body.fluid .lib{display:block;overflow:auto;height:100%}
+body.fluid .side{border-right:0;border-bottom:1px solid var(--p3)}
+body.fluid #glist{flex:none;max-height:30vh}
+body.fluid .main{overflow:visible}
+body.fluid .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+body.fluid .hero{height:200px}body.fluid .hero .in{padding:0 14px 14px;gap:10px}body.fluid .hero .tile{width:56px;height:56px;font-size:26px}body.fluid .hero h1{font-size:34px}
+body.fluid .acts{padding:12px 14px}body.fluid .acts .meta{margin-left:0;width:100%;justify-content:space-between}body.fluid .acts .meta div{text-align:left}
+body.fluid .dgrid,body.fluid .dl,body.fluid .cg,body.fluid .corner{grid-template-columns:1fr}
+body.fluid .dgrid{padding:14px 14px 24px}
+body.fluid .hl{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+body.fluid .dlg{width:94vw;max-height:88vh}body.fluid .pbox{width:94vw}body.fluid #pal{padding-top:40px}
+body.fluid #nl{right:8px;left:8px;width:auto;top:96px}
+body.fluid #fl{width:min(270px,80vw)}
+body.fluid .toast{min-width:0;max-width:calc(100vw - 36px)}
+body.fluid table.lt,body.fluid .pl{display:block;overflow-x:auto}
+body.fluid .bar{flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -265,7 +301,7 @@ const diskUsed=()=>220+S.games.filter(g=>g.installed).reduce((a,g)=>a+g.size,0)-
 
 /* ---------------- window chrome ---------------- */
 let maxed=EMBED||ELECTRON;if(maxed)document.body.classList.add('embed');if(ELECTRON)document.body.classList.add('electron');
-function fit(){const k=Math.min(innerWidth/1280,innerHeight/720)*(maxed?1:.94);$('#win').style.transform=`scale(${k})`;$('#win').classList.toggle('max',maxed)}
+function fit(){const fluid=!ELECTRON&&!EMBED&&innerWidth<900;document.body.classList.toggle('fluid',fluid);if(fluid){$('#win').style.transform='none';return}const k=Math.min(innerWidth/1280,innerHeight/720)*(maxed?1:.94);$('#win').style.transform=`scale(${k})`;$('#win').classList.toggle('max',maxed)}
 addEventListener('resize',fit);fit();
 $('#wmax').onclick=()=>{if(ELECTRON)return window.gdElectron.maximize();maxed=!maxed;fit()};
 $('#wmin').onclick=()=>{if(ELECTRON)return window.gdElectron.minimize();$('#win').classList.add('min');$('#dock').classList.add('on')};

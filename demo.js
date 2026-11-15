@@ -355,6 +355,9 @@ function buildFrame() {
 function fit() {
   const st = $('#dStage'); if (!st || !D) return; const phone = SITE.frame === 'phone';
   const dw = SITE.iframe ? 1290 : phone ? 400 : 790, dh = SITE.iframe ? 730 : phone ? 840 : 520, k = Math.min(st.clientWidth / (dw + 30), st.clientHeight / (dh + 30), 1.2);
+  const narrow = matchMedia('(max-width:820px)').matches;
+  if (narrow) { const kw = Math.min(st.clientWidth / (dw + 30), 1.2); st.style.height = Math.ceil((dh + 30) * kw) + 'px'; $('#dFit').style.transform = `translate(-50%,-50%) scale(${Math.max(.1, kw)})`; return; }
+  st.style.height = '';
   $('#dFit').style.transform = `translate(-50%,-50%) scale(${Math.max(.3, k)})`;
 }
 function vpScale() { const vp = $('#dvp'); return vp.getBoundingClientRect().width / vp.offsetWidth || 1; }
