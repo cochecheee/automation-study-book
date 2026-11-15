@@ -18,7 +18,11 @@ window.FOUND = {
   },
   chapters: [
     {
-      id: 'why', icon: '🎯', title: 'Why & what to automate', tag: 'Automate **checks**, keep **judgement** human.',
+      id: 'why', flows: [
+    {type:'seq', title:'Feedback loop: where automation sits', actors:['Developer','CI','Test suite','Team'], numbered:true, msgs:[
+      {from:0,to:1,t:'push change'},{from:1,to:2,t:'run fast tests (<10 min)'},{from:2,to:1,t:'pass / fail + logs',ret:true},{from:1,to:0,t:'result',ret:true},
+      {sep:'a bug escapes once'},{from:3,to:0,t:'found by a human / in prod'},{from:0,to:2,t:'add a test so it stays caught'}]}
+  ], icon: '🎯', title: 'Why & what to automate', tag: 'Automate **checks**, keep **judgement** human.',
       points: [
         'Automation = fast feedback that replaces manual regression. DORA target: feedback in **under 10 minutes**.',
         'Developer-owned automated tests link to better delivery performance, stability and less burnout (DORA).',
@@ -34,7 +38,11 @@ window.FOUND = {
       src: ['A17', 'A6', 'A19', 'A2', 'A8']
     },
     {
-      id: 'shapes', icon: '🔺', title: 'Test shapes', tag: 'Pyramid, trophy, honeycomb – the **shape** matters less than the **rules** they share.',
+      id: 'shapes', flows: [
+    {type:'seq', title:'"Push it down" as a sequence', actors:['E2E test','Engineer','Lower-level suite'], numbered:true, msgs:[
+      {from:0,to:1,t:'fails after a change'},{from:1,to:2,t:'does any lower test fail?'},{from:2,to:1,t:'no',ret:true},
+      {from:1,to:2,t:'add unit / integration test'},{from:1,to:0,t:'delete the redundant broad test'},{note:'Few broad journeys stay',over:[0,2]}]}
+  ], icon: '🔺', title: 'Test shapes', tag: 'Pyramid, trophy, honeycomb – the **shape** matters less than the **rules** they share.',
       points: [
         'Pyramid (Cohn, 2009): many unit tests, fewer service tests, very few UI tests.',
         'Trophy (Dodds, 2018): static checks, then mostly integration tests – scoped to monoliths.',
@@ -79,7 +87,32 @@ window.FOUND = {
       src: ['A20', 'A21', 'A22', 'A1', 'A7']
     },
     {
-      id: 'layers', icon: '🏗', title: 'Framework layers', tag: 'Each layer depends **only on the one below**; nothing calls upward.',
+      id: 'evolve', icon: '🪜', title: 'From one file to layers (hands-on)', tag: 'Refactor **one test file** step by step and see **what each layer is for**.',
+      points: [
+        'Start with everything in one spec. Each step extracts **one responsibility**; the same four tests keep passing.',
+        'Click a file to read it (new lines are highlighted). Pick a change request to count how many places you must edit at each stage.',
+        'The order matters: data and config, then pages, then flows, then fixtures. The driver adapter is optional.'
+      ],
+      visuals: [{type: 'refactor', title: 'Interactive refactoring lab – TypeScript + Playwright'}],
+      callout: {kind: 'warn', text: 'The code is **illustrative**: it targets a fictional shop and was not run against a real site. The counts are computed from the code shown, not measured on a real project.'},
+      src: ['B1', 'B12', 'B22', 'B24', 'B2', 'B18']
+    },
+    {
+      id: 'layers', flows: [
+    {type:'cls', title:'Class diagram – the five layers as code', classes:[
+      {id:'spec',name:'CheckoutSpec',c:0.5,r:0,methods:['guestPaysByCard()  // intent + assertions']},
+      {id:'flow',name:'CheckoutFlow',c:0.5,r:1,methods:['login(user)','addToCart(sku)','payByCard(card)']},
+      {id:'cart',name:'CartPage',c:0,r:2,attrs:['checkoutBtn: Locator'],methods:['open()','proceed(): PaymentPage']},
+      {id:'pay',name:'PaymentPage',c:1,r:2,attrs:['cardField: Locator'],methods:['pay(card)']},
+      {id:'drv',stereo:'interface',name:'Driver',c:0.5,r:3,methods:['click(locator)','fill(locator, text)','text(locator)']},
+      {id:'pw',name:'PlaywrightDriver',c:0,r:4,methods:['wraps Page']},
+      {id:'se',name:'SeleniumDriver',c:1,r:4,methods:['wraps WebDriver']}],
+     rels:[{from:'spec',to:'flow',kind:'assoc',label:'uses'},{from:'flow',to:'cart',kind:'dep'},{from:'flow',to:'pay',kind:'dep'},{from:'cart',to:'pay',kind:'assoc',label:'returns'},{from:'cart',to:'drv',kind:'dep'},{from:'pay',to:'drv',kind:'dep'},{from:'pw',to:'drv',kind:'impl'},{from:'se',to:'drv',kind:'impl'}],
+     note:'Illustrative design (our synthesis). Only the Driver implementations import the tool, so swapping Playwright for Selenium touches one layer.'},
+    {type:'seq', title:'One test through the layers', actors:['Spec','Flow','Page','Driver','Browser'], colW:140, msgs:[
+      {from:0,to:1,t:'payByCard(card)'},{from:1,to:2,t:'proceed()'},{from:2,to:3,t:'click(checkoutBtn)'},{from:3,to:4,t:'tool command'},
+      {from:4,to:3,t:'done',ret:true},{from:3,to:2,t:'ok',ret:true},{from:2,to:1,t:'PaymentPage',ret:true},{from:1,to:0,t:'ok',ret:true},{note:'Assertions stay in the Spec',over:[0,1]}]}
+  ], icon: '🏗', title: 'Framework layers', tag: 'Each layer depends **only on the one below**; nothing calls upward.',
       points: [
         'No standard layer names exist. The classic split is Test / Business / Core; five layers is a refinement.',
         'Two rules define layering: **dependency direction** and **no upward calls**.',
@@ -101,7 +134,30 @@ window.FOUND = {
       src: ['B24', 'B1', 'B6', 'B4', 'B13']
     },
     {
-      id: 'patterns', icon: '🧱', title: 'Design patterns', tag: 'Pick the pattern for the **pain** you have.',
+      id: 'patterns', flows: [
+    {type:'cls', title:'Screenplay pattern (Serenity/JS vocabulary)', classes:[
+      {id:'actor',name:'Actor',c:1,r:0,attrs:['name'],methods:['attemptsTo(...Activity)','answer(Question)']},
+      {id:'ab',stereo:'interface',name:'Ability',c:0,r:1,methods:['gives access to a driver or client']},
+      {id:'bw',name:'BrowseTheWeb',c:0,r:2,methods:['wraps a browser driver']},
+      {id:'ca',name:'CallAnApi',c:0,r:3,methods:['wraps an HTTP client']},
+      {id:'task',name:'Task',c:1,r:1,methods:['business-meaningful sequence']},
+      {id:'int',name:'Interaction',c:1,r:2,methods:['low-level command']},
+      {id:'q',name:'Question',c:2,r:1,methods:['reads state','used for assertions']}],
+     rels:[{from:'actor',to:'ab',kind:'compose',label:'has'},{from:'bw',to:'ab',kind:'impl'},{from:'ca',to:'ab',kind:'impl'},{from:'actor',to:'task',kind:'dep',label:'performs'},{from:'task',to:'int',kind:'aggr',label:'made of'},{from:'actor',to:'q',kind:'dep',label:'asks'},{from:'int',to:'ab',kind:'dep',label:'uses'}],
+     note:'Abilities make the same Task portable across UI and API. Source does not state the costs of the pattern.'},
+    {type:'cls', title:'Page object with component objects', classes:[
+      {id:'bp',name:'BasePage',c:1,r:0,attrs:['page / driver'],methods:['goto()']},
+      {id:'lp',name:'LoginPage',c:0,r:1,methods:['loginAs(user): HomePage']},
+      {id:'hp',name:'HomePage',c:1,r:1,methods:['search(q): ResultsPage']},
+      {id:'rp',name:'ResultsPage',c:2,r:1,methods:['items(): Locator']},
+      {id:'nav',name:'NavBar (component)',c:1,r:2,methods:['open(menu)']}],
+     rels:[{from:'lp',to:'bp',kind:'inherit'},{from:'hp',to:'bp',kind:'inherit'},{from:'rp',to:'bp',kind:'inherit'},{from:'hp',to:'nav',kind:'compose',label:'has'},{from:'hp',to:'rp',kind:'assoc',label:'returns'}],
+     note:'Fowler: model meaningful UI parts, return the next page object, keep assertions in the test by default.'},
+    {type:'seq', title:'UI setup vs app action', actors:['Test','UI','App internals'], msgs:[
+      {sep:'UI path (slow)'},{from:0,to:1,t:'click "add" ×5'},{from:1,to:2,t:'model.addTodo ×5'},
+      {sep:'App action (fast)'},{from:0,to:2,t:'window.model.addTodo()'},{from:0,to:1,t:'UI only for what is under test'},
+      {note:'One report: setup ~4–5 s → ~1 s (single-author 2019 opinion)',over:[0,2]}]}
+  ], icon: '🧱', title: 'Design patterns', tag: 'Pick the pattern for the **pain** you have.',
       points: [
         'Page objects model meaningful UI parts (panels, components), not just whole pages.',
         'Evidence: in a 2013 study (Leotta et al.), a page-object suite was much faster to repair after an app upgrade.',
@@ -115,7 +171,11 @@ window.FOUND = {
       src: ['B1', 'B4', 'B12', 'B13', 'B14', 'B18', 'B22', 'B15']
     },
     {
-      id: 'locators', icon: '🎯', title: 'Locators & waiting', tag: 'Find elements like a **user**; let the tool **wait**.',
+      id: 'locators', flows: [
+    {type:'seq', title:'Auto-wait vs explicit wait', actors:['Test','Tool','Page'], msgs:[
+      {sep:'Playwright: tool owns waiting'},{from:0,to:1,t:'click(getByRole)'},{from:1,to:2,t:'query + checks'},{from:2,to:1,t:'not yet visible',ret:true},{from:1,to:2,t:'retry'},{from:2,to:1,t:'actionable',ret:true},{from:1,to:2,t:'click'},
+      {sep:'Selenium: you own waiting'},{from:0,to:1,t:'wait.until(visible(el))'},{from:1,to:2,t:'poll findElement'},{from:2,to:1,t:'found',ret:true},{from:0,to:1,t:'el.click()'}]}
+  ], icon: '🎯', title: 'Locators & waiting', tag: 'Find elements like a **user**; let the tool **wait**.',
       points: [
         'Prefer what users perceive: role + name, label, text. Test ids when nothing else is stable. CSS/XPath last.',
         'Playwright locators re-resolve at each action; Selenium element references can go **stale**.',
@@ -131,7 +191,23 @@ window.FOUND = {
       src: ['B21', 'B3', 'B2', 'B14', 'B23', 'B10']
     },
     {
-      id: 'protocols', icon: '🔌', title: 'How tools talk to browsers', tag: 'Same stack, different **wire** and different **owner of waiting**.',
+      id: 'protocols', flows: [
+    {type:'seq', title:'Selenium classic – one HTTP round trip per command', actors:['Test','Client lib','Driver','Browser'], colW:150, msgs:[
+      {from:0,to:1,t:'driver.get(url)'},{from:1,to:2,t:'POST /session/{id}/url'},{from:2,to:3,t:'navigate (native)'},{from:3,to:2,t:'loaded',ret:true},{from:2,to:1,t:'200 {value:null}',ret:true},
+      {from:0,to:1,t:'findElement(css)'},{from:1,to:2,t:'POST /element'},{from:2,to:1,t:'element reference',ret:true},
+      {from:0,to:1,t:'el.click()'},{from:1,to:2,t:'POST /element/{id}/click'},{from:2,to:3,t:'click (native)'},
+      {note:'Reference can go stale after re-render; waiting is yours',over:[0,3]}]},
+    {type:'seq', title:'Playwright click – server runs actionability', actors:['Test','Client','Node server','Browser'], colW:150, msgs:[
+      {from:0,to:1,t:'locator.click()'},{from:1,to:2,t:'channel message'},{sep:'retry until timeout'},{from:2,to:3,t:'resolve locator (strict)'},{from:3,to:2,t:'1 match',ret:true},
+      {from:2,to:3,t:'visible · stable · enabled · receives events?'},{from:3,to:2,t:'yes',ret:true},{from:2,to:3,t:'dispatch mouse events'},{from:2,to:1,t:'done / TimeoutError',ret:true},
+      {note:'Server placement from a secondary source – verify before asserting',over:[0,3]}]},
+    {type:'seq', title:'WebDriver BiDi – browser pushes events', actors:['Client','Browser'], colW:300, numbered:true, msgs:[
+      {from:0,to:1,t:'session.new  (webSocketUrl)'},{from:1,to:0,t:'session id',ret:true},{from:0,to:1,t:'session.subscribe network, log'},{from:1,to:0,t:'ok',ret:true},
+      {from:0,to:1,t:'browsingContext.navigate  (id 3)'},{from:1,to:0,t:'event: network.beforeRequestSent'},{from:1,to:0,t:'event: browsingContext.load'},{from:1,to:0,t:'result id 3',ret:true}]},
+    {type:'seq', title:'Appium – command proxied to the device', actors:['Test','Appium server','Driver','Device agent'], colW:150, msgs:[
+      {from:0,to:1,t:'POST /element (HTTP)'},{from:1,to:2,t:'route to driver'},{from:2,to:3,t:'proxy (adb forward)'},{from:3,to:2,t:'result',ret:true},{from:2,to:1,t:'result',ret:true},{from:1,to:0,t:'W3C response',ret:true},
+      {note:'UiAutomator2: on-device server (port 6790); XCUITest: WebDriverAgent',over:[1,3]}]}
+  ], icon: '🔌', title: 'How tools talk to browsers', tag: 'Same stack, different **wire** and different **owner of waiting**.',
       points: [
         '**WebDriver classic** (W3C): HTTP, one request = one command = one response.',
         '**CDP**: WebSocket JSON with events; experimental parts change without notice. Use via a library, not raw.',
@@ -149,7 +225,11 @@ window.FOUND = {
       src: ['B10', 'B11', 'B17', 'B16', 'B5', 'B7', 'B8', 'B9', 'B19', 'B20', 'B6']
     },
     {
-      id: 'flaky', icon: '🎲', title: 'Flaky tests', tag: 'Passes and fails on the **same code**. The real cost is lost trust.',
+      id: 'flaky', flows: [
+    {type:'seq', title:'Flake lifecycle in CI', actors:['CI','Flake tracker','Owning team','Gate'], numbered:true, colW:150, msgs:[
+      {from:0,to:0,t:'test fails'},{from:0,to:0,t:'rerun passes → flake'},{from:0,to:1,t:'record flake'},{from:1,to:2,t:'auto-file bug (hotlist)'},
+      {from:2,to:3,t:'quarantine (still runs)'},{from:2,to:2,t:'fix root cause'},{from:2,to:0,t:'verify: N green reruns'},{from:2,to:3,t:'re-gate'}]}
+  ], icon: '🎲', title: 'Flaky tests', tag: 'Passes and fails on the **same code**. The real cost is lost trust.',
       points: [
         'Google (2016): ~16% of tests had flaked at least once; ~84% of pass-to-fail transitions were flakes.',
         'Spotify: just showing per-test flakiness in a table cut it from 6% to 4% in two months.',
@@ -166,7 +246,11 @@ window.FOUND = {
       src: ['A9', 'A6', 'A10', 'A11', 'A12', 'C14', 'C1', 'B3']
     },
     {
-      id: 'pipeline', icon: '🚦', title: 'CI/CD pipeline & scale', tag: 'Fast stages first; **shard** the slow ones.',
+      id: 'pipeline', flows: [
+    {type:'seq', title:'Sharded run on a pull request', actors:['Developer','CI','Shard jobs 1..4','Merge job'], colW:150, numbered:true, msgs:[
+      {from:0,to:1,t:'open PR'},{from:1,to:2,t:'matrix: --shard=i/4'},{from:2,to:2,t:'run tests, blob report'},{from:2,to:3,t:'upload blobs'},
+      {from:3,to:3,t:'merge (runs even if a shard fails)'},{from:3,to:0,t:'one HTML report + traces',ret:true},{note:'globalTimeout set so a report is always written',over:[1,3]}]}
+  ], icon: '🚦', title: 'CI/CD pipeline & scale', tag: 'Fast stages first; **shard** the slow ones.',
       points: [
         'Pipeline = stages ordered fast-first; the last stage is production.',
         'Fowler: commit build ≈ **10 min**; an hour-long build is unreasonable for most teams. Google: presubmit runs only fast, reliable tests.',
@@ -182,7 +266,11 @@ window.FOUND = {
       src: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C10', 'C12', 'C13', 'C18']
     },
     {
-      id: 'data', icon: '🗄', title: 'Test data & environments', tag: 'Trade **speed** for **fidelity** deliberately.',
+      id: 'data', flows: [
+    {type:'seq', title:'Testcontainers lifecycle', actors:['Test','Testcontainers','Docker','Database'], colW:150, numbered:true, msgs:[
+      {from:0,to:1,t:'start container'},{from:1,to:2,t:'run image, random free port'},{from:2,to:3,t:'boot'},{from:1,to:3,t:'wait strategy until ready'},
+      {from:1,to:0,t:'host:port',ret:true},{from:0,to:3,t:'seed data + run test'},{from:1,to:2,t:'cleanup (Ryuk)'},{note:'A fresh real dependency per run – no shared-environment drift',over:[0,3]}]}
+  ], icon: '🗄', title: 'Test data & environments', tag: 'Trade **speed** for **fidelity** deliberately.',
       points: [
         'A hermetic test is self-contained; failures then point at your change.',
         'Doubles drift from the real service. Pair them with contract tests.',
@@ -197,7 +285,11 @@ window.FOUND = {
       src: ['C1', 'C2', 'C8', 'C9', 'C15', 'C16', 'C17']
     },
     {
-      id: 'api', icon: '🔗', title: 'API, contract & mobile', tag: 'Test below the UI; verify the **seams**.',
+      id: 'api', flows: [
+    {type:'seq', title:'Consumer-driven contract with can-i-deploy', actors:['Consumer CI','Pact Broker','Provider CI','Deploy'], colW:150, numbered:true, msgs:[
+      {from:0,to:0,t:'consumer test (against a double)'},{from:0,to:1,t:'publish pact (examples)'},{from:2,to:1,t:'fetch pacts'},{from:2,to:2,t:'replay requests, check responses'},
+      {from:2,to:1,t:'publish verification result'},{from:0,to:1,t:'can-i-deploy?'},{from:1,to:0,t:'yes / no (exit code)',ret:true},{from:0,to:3,t:'deploy'},{from:0,to:1,t:'record-deployment'}]}
+  ], icon: '🔗', title: 'API, contract & mobile', tag: 'Test below the UI; verify the **seams**.',
       points: [
         'Consumer-driven contracts: consumers write what they use, providers verify it in their own pipeline.',
         'Pact tests concrete examples ("contract by example"); an OpenAPI schema describes all states. They answer different questions.',
@@ -212,7 +304,12 @@ window.FOUND = {
       src: ['D1', 'D2', 'D3', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D20', 'C8', 'C9']
     },
     {
-      id: 'bdd', icon: '🥒', title: 'BDD & keyword-driven', tag: 'BDD is a **collaboration** practice, not a test tool.',
+      id: 'bdd', flows: [
+    {type:'seq', title:'BDD as collaboration', actors:['Business','Developer','Tester','Automated suite'], colW:150, numbered:true, msgs:[
+      {sep:'Discovery'},{from:0,to:1,t:'concrete examples'},{from:1,to:2,t:'ask what else could happen'},
+      {sep:'Formulation'},{from:2,to:3,t:'Gherkin: behaviour, not UI'},
+      {sep:'Automation'},{from:3,to:1,t:'example fails first (red)',ret:true},{from:1,to:3,t:'implement → green'}]}
+  ], icon: '🥒', title: 'BDD & keyword-driven', tag: 'BDD is a **collaboration** practice, not a test tool.',
       points: [
         'Three activities: **Discovery**, **Formulation** (Gherkin), **Automation**. Skip discovery and the rest adds little.',
         'Failure mode: Gherkin written after the code by a different role, as UI scripts.',
@@ -224,7 +321,11 @@ window.FOUND = {
       src: ['D11', 'D12', 'D13', 'D14', 'D21']
     },
     {
-      id: 'ai', icon: '🤖', title: 'AI-assisted testing', tag: 'Useful with **human gates**; numbers are company self-reports.',
+      id: 'ai', flows: [
+    {type:'seq', title:'Playwright agents with human gates', actors:['Human','Planner','Generator','Healer','CI'], colW:130, numbered:true, msgs:[
+      {from:0,to:1,t:'seed test + goal'},{from:1,to:0,t:'Markdown plan',ret:true},{from:0,to:2,t:'approve plan'},{from:2,to:4,t:'tests (selectors verified live)'},
+      {from:4,to:3,t:'failure'},{from:3,to:4,t:'patch locator/wait, or skip'},{from:4,to:0,t:'review diff: no weakened asserts',ret:true},{note:'Skipped tests and weaker assertions need human review',over:[0,4]}]}
+  ], icon: '🤖', title: 'AI-assisted testing', tag: 'Useful with **human gates**; numbers are company self-reports.',
       points: [
         'Meta TestGen-LLM: 75% of generated cases built, 57% passed reliably, 25% added coverage; 73% of test-a-thon recommendations accepted.',
         'Meta ACH (mutation-guided): 73% of 191 tests accepted in test-a-thons, but 49% of tests added no line coverage.',
